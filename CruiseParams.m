@@ -19,8 +19,8 @@ sParams.std_e = 0;%2*1000/60/60; % [m/s]
 sParams.std_b = 0*1000/60/60; % [m/s]
 
 % controller:
-sParams.Kp = 1;
-sParams.Ki = 1;
+sParams.Kp = 0.3;
+sParams.Ki = 0.7;
 
 if enableLinear
     sParams.beta = 0;
