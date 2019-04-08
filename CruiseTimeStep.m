@@ -1,40 +1,47 @@
-function [sStateVec,u_k] = CruiseTimeStep(sStateVec, vRef, sModelParams,sSimParams, theta, gear, e_k, b_k)
+function [stateVec_x,u_k] = CruiseTimeStep(stateVec_x, input_u, sModelParams, sSimParams, gear, b_k)
 % Inputs:
-% theta - road angle [rad]
-% vRef - reference speed [m/s]
+% stateVec_x - [v;z]
+% input_u - [v_r; sin(theta)]
+% sModelParams
+% sSimParams
 % gear - 1...5
-% sStateVec
+% b_k - process noise due to wind
 %
 % Ron Teichner, 05.04.2019
 
 ts = 1/sSimParams.fs;
+simulateWithoutControlLimit = false;
 
-% measurement noise:
-%e_k = sModelParams.std_e * randn; % [m/s]
-
-% control:
-u_k = sModelParams.Kp*(vRef - sStateVec.v - e_k) + sModelParams.Ki*sStateVec.z;
-
-% non-linearity of the controller:
-u_k = max(min(u_k , 1) , 0);
-z_k1 = sStateVec.z + (vRef - sStateVec.v - e_k)*ts;
-
-% torque:
-T = sModelParams.Tm*(1 - sModelParams.beta*(sModelParams.alpha_n(gear)*sStateVec.v/sModelParams.omega_m - 1)^2);
-
-% wind noise:
-%b_k = sModelParams.std_b * randn; % [m/s]
-
-% forces:
-Fg = sModelParams.m * sModelParams.g * sin(theta);
-Fr = sModelParams.m * sModelParams.g * sModelParams.Cr * sStateVec.v;
-Fa = 0.5 * sModelParams.rho * sModelParams.Cd * sModelParams.A * sStateVec.v^2;
-Fd = Fg + Fr + Fa;
-
-v_k1 = sStateVec.v + (sModelParams.alpha_n(gear) * u_k * T - Fd)/sModelParams.m*ts + b_k*ts;
-
-sStateVec.v = v_k1;
-sStateVec.z = z_k1;
+if simulateWithoutControlLimit
+    A = zeros(2,2);
+    A(1,1) = -sModelParams.g*sModelParams.Cr - sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
+    A(1,2) = sModelParams.alpha_n(gear)*sModelParams.Ki*sModelParams.Tm/sModelParams.m;
+    A(2,1) = -1;
+    A(2,2) = 0;
+    
+    B = zeros(2,2);
+    B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
+    B(1,2) = -sModelParams.g;
+    B(2,1) = 1;
+    B(2,2) = 0;
+    
+    stateVec_x = stateVec_x + (A*stateVec_x + B*input_u)*ts + [b_k;0];
+    
+    % what is the control (throttle level?)
+    u_k = sModelParams.Kp * (input_u(1) - stateVec_x(1)) + sModelParams.Ki*stateVec_x(2);
+    
+else
+    u_k = sModelParams.Kp * (input_u(1) - stateVec_x(1)) + sModelParams.Ki*stateVec_x(2);
+    u_k = min(u_k , 1);
+    u_k = max(u_k , 0);
+    
+    v_k1 =  stateVec_x(1) + (sModelParams.alpha_n(gear)*sModelParams.Tm/sModelParams.m*u_k...
+        - sModelParams.g*input_u(2) - sModelParams.g*sModelParams.Cr*stateVec_x(1))*ts + b_k;
+    
+    z_k1 = stateVec_x(2) + (input_u(1) - stateVec_x(1))*ts;
+    
+    stateVec_x = [v_k1 ; z_k1];
+end
 
 end
 
