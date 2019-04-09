@@ -19,10 +19,13 @@ sParams.std_e = 0;%2*1000/60/60; % [m/s]
 sParams.std_b = 1e-2*1000/60/60; % [m/s]
 
 % controller:
-%Lets say we want 90% full gas if we reached 10kph less than Vref
-e = 10*1000/60/60;  
+%Lets say we want 90% full gas if we reached 20kph less than Vref
+e = 30*1000/60/60;  
 sParams.Kp = 0.9/e;
-sParams.Ki = 0.1 * sParams.Kp;
+
+% if I am 20 sec at 30kph less I'll add 25%
+e = 30*1000/60/60 * 20;
+sParams.Ki = 0.25/e;
 
 if enableLinear
     sParams.beta = 0;

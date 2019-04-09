@@ -1,4 +1,4 @@
-function [x,sin_theta,roadZ] = roadAngleGen(distance)
+function [x,sin_theta,roadZ] = roadAngleGen(peakHeight,distance)
 % Inputs:
 
 % I want a hill up and down to be 2Km. so a complete cycle of 4Km
@@ -6,7 +6,7 @@ function [x,sin_theta,roadZ] = roadAngleGen(distance)
 maxFreq = 1/2000; % [cycles@meter]
 fs = 8*maxFreq; % [hz]
 ts = 1/fs; % sample every 'ts' meters.
-peakHeight = 400; % [m]
+%peakHeight = 300; % [m]
 
 
 Wn = maxFreq / (fs/2);

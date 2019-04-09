@@ -10,8 +10,29 @@ ts = 1/sSimParams.fs;
 
 
 distance = 1000e3; % [m]
+peakHeight = 300; % [m]
+[roadX,sin_theta,roadZ] = roadAngleGen(peakHeight,distance);
 
-[roadX,sin_theta,roadZ] = roadAngleGen(distance);
+peakHeight = 10; % [m]
+[roadX2,sin_theta2,roadZ2] = roadAngleGen(peakHeight,distance);
+
+% switch from mountain to plane every 10 Km:
+switchEvery = 10e3; % [m]
+roadX_ts = mean(diff(roadX));
+nSamplesIn10Km = switchEvery/roadX_ts;
+%roadX = reshape(roadX,nSamplesIn10Km,[]);
+sin_theta = reshape(sin_theta,nSamplesIn10Km,[]);
+roadZ = reshape(roadZ,nSamplesIn10Km,[]);
+
+%roadX2 = reshape(roadX2,nSamplesIn10Km,[]);
+sin_theta2 = reshape(sin_theta2,nSamplesIn10Km,[]);
+roadZ2 = reshape(roadZ2,nSamplesIn10Km,[]);
+
+%roadX = reshape([roadX ; roadX2],[],1);
+sin_theta = reshape([sin_theta ; sin_theta2],[],1);
+roadZ = reshape([roadZ ; roadZ2],[],1);
+
+roadX = [0:(numel(roadZ)-1)]*roadX_ts;
 % roadX = [0 ; 100e3];
 % sin_theta = 10*[1/360*2*pi ; 1/360*2*pi];
 % roadZ = [0 ; tan(sin_theta(1))*diff(roadX)];
