@@ -1,14 +1,17 @@
-function [x,sin_theta,roadZ] = roadAngleGen(maxFreq,distance)
+function [x,sin_theta,roadZ] = roadAngleGen(distance)
 % Inputs:
-% maxSlope [deg/m]
 
-ts = 20; % sample every 'ts' meters.
-peakHeight = 650; % [m]
-fs = 1/ts; % [hz]
+% I want a hill up and down to be 2Km. so a complete cycle of 4Km
+% so max freq is 1/4000 [cycles@meter]
+maxFreq = 1/2000; % [cycles@meter]
+fs = 8*maxFreq; % [hz]
+ts = 1/fs; % sample every 'ts' meters.
+peakHeight = 400; % [m]
+
 
 Wn = maxFreq / (fs/2);
 
-N = 100;
+N = 20;
 b = fir1(N,Wn);
 %  B = fir1(N,Wn);  Wn must be between 0 < Wn < 1.0, with 1.0 corresponding to half the sample rate.
 [H,W] = freqz(b,1,[],fs);
@@ -23,7 +26,7 @@ xlabel('cycles @ 100 meter'); ylabel('gain [db]'); title('filter response'); gri
 nSamples = ceil(distance*fs);
 x = transpose([0:(nSamples - 1)]./fs); % [m]
 
-whiteNoise = peakHeight*randn(max(numel(x),10*N),1);
+whiteNoise = peakHeight*randn(max(10*numel(x),10*N),1);
 roadZ = filter(b,1,whiteNoise); % [m]
 roadZ = roadZ(end-nSamples+1:end);
 theta_rad = atan([0 ; diff(roadZ)]/ts);

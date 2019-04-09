@@ -1,4 +1,4 @@
-function [stateVec_x,u_k] = CruiseTimeStep(stateVec_x, input_u, sModelParams, sSimParams, gear, b_k)
+function [stateVec_x,u_k] = CruiseTimeStep(stateVec_x, input_u, sModelParams, sSimParams, gear, b_k, enableLinear)
 % Inputs:
 % stateVec_x - [v;z]
 % input_u - [v_r; sin(theta)]
@@ -6,13 +6,12 @@ function [stateVec_x,u_k] = CruiseTimeStep(stateVec_x, input_u, sModelParams, sS
 % sSimParams
 % gear - 1...5
 % b_k - process noise due to wind
-%
+% enableLinear - control not bounded to [0,1]
 % Ron Teichner, 05.04.2019
 
 ts = 1/sSimParams.fs;
-simulateWithoutControlLimit = false;
 
-if simulateWithoutControlLimit
+if enableLinear
     A = zeros(2,2);
     A(1,1) = -sModelParams.g*sModelParams.Cr - sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
     A(1,2) = sModelParams.alpha_n(gear)*sModelParams.Ki*sModelParams.Tm/sModelParams.m;

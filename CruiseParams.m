@@ -16,11 +16,13 @@ sParams.g = 9.8; % [m/sec^2]
 % noises:
 sParams.std_e = 0;%2*1000/60/60; % [m/s]
 % this is not a good noise
-sParams.std_b = 0*1000/60/60; % [m/s]
+sParams.std_b = 1e-2*1000/60/60; % [m/s]
 
 % controller:
-sParams.Kp = 0.3;
-sParams.Ki = 0.7;
+%Lets say we want 90% full gas if we reached 10kph less than Vref
+e = 10*1000/60/60;  
+sParams.Kp = 0.9/e;
+sParams.Ki = 0.1 * sParams.Kp;
 
 if enableLinear
     sParams.beta = 0;
