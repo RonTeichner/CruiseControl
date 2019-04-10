@@ -1,10 +1,12 @@
-function CruiseSimulator(sSimParams,sModelParams,roadX,sin_theta,roadZ)
+function [ySampleRate,yD_tVec,yD] = CruiseSimulator(sSimParams,sModelParams,sInputs)
 
-vRef = sSimParams.vNominal; % [m/s]
-gear = 2;
+roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta; roadZ = sInputs.sRoad.roadZ;
+
+vRef = sInputs.vRef; % [m/s]
+gear = sSimParams.gear;
 ts = 1/sSimParams.fs;
 
-initStateVec(1) = sSimParams.vNominal;
+initStateVec(1) = vRef;
 initStateVec(2) = 0;
 
 nSamplesInSim = round(sSimParams.simDuration * sSimParams.fs);
@@ -43,6 +45,23 @@ for i=2:nSamplesInSim
     pos(i) = pos(i-1) + nextStateVec(1)*ts;
 end
 
+%% observer
+C = [1,0;0,1];
+
+observationNoise = [sModelParams.speedMeasure_std * randn(1,size(stateVec,2));...
+    sModelParams.controllerStateMeasure_std * randn(1,size(stateVec,2))];
+
+y = C*stateVec + observationNoise;
+
+% it seems resnable to downsample y.
+desired_ySampleRate = 1; % [hz]
+yDownSampleRate = round(sSimParams.fs/desired_ySampleRate);
+ySampleRate = sSimParams.fs / yDownSampleRate;
+
+% downsample:
+yD(1,:) = y(1,1:yDownSampleRate:end);
+yD(2,:) = y(2,1:yDownSampleRate:end);
+yD_tVec = tVec(1) + [0:(size(yD,2)-1)]./ySampleRate;
 %% figures
 roadZ_atPos = interp1(roadX,roadZ,pos,'spline');
 thetaDeg_atPos = asin(interp1(roadX,sin_theta,pos,'spline'))/2/pi*360;

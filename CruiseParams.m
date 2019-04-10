@@ -18,6 +18,9 @@ sParams.std_e = 0;%2*1000/60/60; % [m/s]
 % this is not a good noise
 sParams.std_b = 1e-2*1000/60/60; % [m/s]
 
+sParams.speedMeasure_std = 0.25*1000/60/60; % [m/s]
+sParams.controllerStateMeasure_std = 1e-3; % [m]
+
 % controller:
 %Lets say we want 90% full gas if we reached 20kph less than Vref
 e = 30*1000/60/60;  
