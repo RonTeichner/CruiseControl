@@ -1,4 +1,4 @@
-function [x,sin_theta,roadZ] = roadAngleGen(peakHeight,distance)
+function [x,sin_theta,roadZ] = roadAngleGen(peakHeight,distance,enableFig)
 % Inputs:
 
 % I want a hill up and down to be 2Km. so a complete cycle of 4Km
@@ -16,12 +16,14 @@ b = fir1(N,Wn);
 %  B = fir1(N,Wn);  Wn must be between 0 < Wn < 1.0, with 1.0 corresponding to half the sample rate.
 [H,W] = freqz(b,1,[],fs);
 
-figure; 
-%subplot(2,1,1); 
-plot(W*100,20*log10(abs(H)));
-hold all; stem(maxFreq*100 , min(20*log10(abs(H)))-10);
-xlabel('cycles @ 100 meter'); ylabel('gain [db]'); title('filter response'); grid on;
-%ylim([-100,0]);
+if enableFig
+    figure;
+    %subplot(2,1,1);
+    plot(W*100,20*log10(abs(H)));
+    hold all; stem(maxFreq*100 , min(20*log10(abs(H)))-10);
+    xlabel('cycles @ 100 meter'); ylabel('gain [db]'); title('filter response'); grid on;
+    %ylim([-100,0]);
+end
 
 nSamples = ceil(distance*fs);
 x = transpose([0:(nSamples - 1)]./fs); % [m]
@@ -38,9 +40,11 @@ roadZFft = 20*log10(abs(fftshift(fft(roadZ))));
 roadZFft = roadZFft - max(roadZFft);
 
 [~,fVecZeroIdx] = min(abs(fVec));
-%subplot(2,1,2); 
-hold all; plot(fVec(fVecZeroIdx:end)*100,roadZFft(fVecZeroIdx:end)); %xlabel('cycles @ 100 meter'); ylabel('[db]'); grid on; title('roadZ fft');
-%hold all; stem(maxFreq*100 , min(roadZFft)-10); %legend('roadZ fft','cutoff freq'); % ylim([-100,0]);
-legend('filter response','cutoff freq','road fft');
+%subplot(2,1,2);
+if enableFig
+    hold all; plot(fVec(fVecZeroIdx:end)*100,roadZFft(fVecZeroIdx:end)); %xlabel('cycles @ 100 meter'); ylabel('[db]'); grid on; title('roadZ fft');
+    %hold all; stem(maxFreq*100 , min(roadZFft)-10); %legend('roadZ fft','cutoff freq'); % ylim([-100,0]);
+    legend('filter response','cutoff freq','road fft');
+end
 end
 
