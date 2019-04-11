@@ -17,12 +17,7 @@ b = fir1(N,Wn);
 [H,W] = freqz(b,1,[],fs);
 
 if enableFig
-    figure;
-    %subplot(2,1,1);
-    plot(W*100,20*log10(abs(H)));
-    hold all; stem(maxFreq*100 , min(20*log10(abs(H)))-10);
-    xlabel('cycles @ 100 meter'); ylabel('gain [db]'); title('filter response'); grid on;
-    %ylim([-100,0]);
+    
 end
 
 nSamples = ceil(distance*fs);
@@ -34,17 +29,26 @@ roadZ = roadZ(end-nSamples+1:end);
 theta_rad = atan([0 ; diff(roadZ)]/ts);
 sin_theta = sin(theta_rad);
 
-nfft = numel(roadZ);
-fVec = [-fs/2:fs/nfft:(fs/2 - fs/nfft)]; % [cycles@meter]
-roadZFft = 20*log10(abs(fftshift(fft(roadZ))));
-roadZFft = roadZFft - max(roadZFft);
 
-[~,fVecZeroIdx] = min(abs(fVec));
-%subplot(2,1,2);
 if enableFig
+    figure;
+    nfft = numel(roadZ);
+    fVec = [-fs/2:fs/nfft:(fs/2 - fs/nfft)]; % [cycles@meter]
+    roadZFft = 20*log10(abs(fftshift(fft(roadZ))));
+    roadZFft = roadZFft - prctile(roadZFft,90);
+    
+    [~,fVecZeroIdx] = min(abs(fVec));
     hold all; plot(fVec(fVecZeroIdx:end)*100,roadZFft(fVecZeroIdx:end)); %xlabel('cycles @ 100 meter'); ylabel('[db]'); grid on; title('roadZ fft');
     %hold all; stem(maxFreq*100 , min(roadZFft)-10); %legend('roadZ fft','cutoff freq'); % ylim([-100,0]);
-    legend('filter response','cutoff freq','road fft');
+    
+    
+    
+    %subplot(2,1,1);
+    plot(W*100,20*log10(abs(H)));
+    hold all; stem(maxFreq*100 , min(20*log10(abs(H)))-10);
+    xlabel('cycles @ 100 meter'); ylabel('gain [db]'); title('filter response'); grid on;
+    legend('road fft' , 'filter response' , 'cutoff freq');
+    %ylim([-100,0]);
 end
 end
 
