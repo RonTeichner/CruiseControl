@@ -3,7 +3,7 @@ function [ySampleRate,yD_tVec,yD,input_uD,sGroundTruth] = CruiseSimulator(sSimPa
 roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta; roadZ = sInputs.sRoad.roadZ;
 
 vRef = sInputs.vRef; % [m/s]
-gear = sSimParams.gear;
+gear = sModelParams.gear;
 ts = 1/sSimParams.fs;
 
 initStateVec(1) = vRef;
@@ -48,6 +48,7 @@ end
 sGroundTruth.stateVec   = stateVec;
 sGroundTruth.tVec       = tVec;
 sGroundTruth.u          = u;
+sGroundTruth.pos = pos;
 %% observer
 C = [1,0;0,1];
 
@@ -69,20 +70,7 @@ yD_tVec = tVec(1) + [0:(size(yD,2)-1)]./ySampleRate;
 input_uD(1,:) = input_u(1,1:yDownSampleRate:end);
 input_uD(2,:) = input_u(2,1:yDownSampleRate:end);
 
-%% figures
-roadZ_atPos = interp1(roadX,roadZ,pos,'spline');
-thetaDeg_atPos = asin(interp1(roadX,sin_theta,pos,'spline'))/2/pi*360;
-figure; 
-v_kph = stateVec(1,:)*60*60./1000;
-subplot(4,1,1); plot(tVec,v_kph); xlabel('sec'); grid on; ylabel('kph'); title('speed');
-%subplot(4,1,2); plot(pos,theta/(2*pi)*360); xlabel('m'); ylabel('angle'); grid on; 
-subplot(4,1,2); plot(tVec,roadZ_atPos); xlabel('sec'); ylabel('m'); title('vertical position'); grid on; 
-subplot(4,1,3); plot(tVec,u); xlabel('sec'); title('u'); grid on;
-subplot(4,1,4); plot(tVec,stateVec(2,:)); xlabel('sec'); title('z'); ylabel('m'); grid on;
 
-figure;
-subplot(2,1,1); plot(pos,roadZ_atPos); xlabel('m'); ylabel('m'); title('road'); grid on;
-subplot(2,1,2); plot(pos,thetaDeg_atPos); xlabel('m'); ylabel('deg'); title('road slope'); grid on;
 
 
 

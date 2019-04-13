@@ -1,42 +1,47 @@
-function sParams = CruiseParams(fs,enableLinear)
+function csAllModels = CruiseParams(fs,gears,enableLinear)
 % function sParams = CruiseParams(fs)
 %
 % Inputs:
 % fs - sample rate [hz]
 
-sParams.alpha_n = [40 25 16 12 10];
-sParams.m = 1200; % [kg]
-sParams.Cr = 0.01; 
-sParams.Cd = 0.32;
-sParams.A = 2.4; % [m^2]
-sParams.Tm = 190; % [Nm]
-sParams.omega_m = 420; %[rad/sec]
-sParams.g = 9.8; % [m/sec^2]
+sModelParams.alpha_n = [40 25 16 12 10];
+sModelParams.m = 1200; % [kg]
+sModelParams.Cr = 0.01; 
+sModelParams.Cd = 0.32;
+sModelParams.A = 2.4; % [m^2]
+sModelParams.Tm = 190; % [Nm]
+sModelParams.omega_m = 420; %[rad/sec]
+sModelParams.g = 9.8; % [m/sec^2]
 
 % noises:
-sParams.std_e = 0;%2*1000/60/60; % [m/s]
+sModelParams.std_e = 0;%2*1000/60/60; % [m/s]
 % this is not a good noise
-sParams.std_b = 1e-2*1000/60/60; % [m/s]
+sModelParams.std_b = 1e-2*1000/60/60; % [m/s]
 
-sParams.speedMeasure_std = 0.25*1000/60/60; % [m/s]
-sParams.controllerStateMeasure_std = 1e-3; % [m]
+sModelParams.speedMeasure_std = 0.25*1000/60/60; % [m/s]
+sModelParams.controllerStateMeasure_std = 1e-3; % [m]
 
 % controller:
 %Lets say we want 90% full gas if we reached 20kph less than Vref
 e = 30*1000/60/60;  
-sParams.Kp = 0.9/e;
+sModelParams.Kp = 0.9/e;
 
 % if I am 20 sec at 30kph less I'll add 25%
 e = 30*1000/60/60 * 20;
-sParams.Ki = 0.25/e;
+sModelParams.Ki = 0.25/e;
 
 if enableLinear
-    sParams.beta = 0;
-    sParams.rho = 0;
+    sModelParams.beta = 0;
+    sModelParams.rho = 0;
 else
-    sParams.beta = 0.4;
-    sParams.rho = 1.3; %[kg/m^3]
+    sModelParams.beta = 0.4;
+    sModelParams.rho = 1.3; %[kg/m^3]
 end
 
+nModels = numel(gears);
+for i=1:nModels
+    csAllModels{i} = sModelParams;
+    csAllModels{i}.gear = gears(i);
+end
 end
 

@@ -1,5 +1,5 @@
-function sKalmanMatrices = CruiseKalmanParams(sModelParams,gear,y_fs,x_fs)
-
+function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
+    gear = sModelParams.gear;
     A = zeros(2,2);
     A(1,1) = -sModelParams.g*sModelParams.Cr - sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
     A(1,2) = sModelParams.alpha_n(gear)*sModelParams.Ki*sModelParams.Tm/sModelParams.m;

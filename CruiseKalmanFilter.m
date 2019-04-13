@@ -1,4 +1,4 @@
-function [xPlusMean , xPlusCov] = CruiseKalmanFilter(sKalmanMatrices,sInitValues,measurements,systemExternalInputs)
+function [xPlusMean , xPlusCov , weightFactor] = CruiseKalmanFilter(sKalmanMatrices,sInitValues,measurements,systemExternalInputs)
 
 xPlusMean_init  = sInitValues.xPlusMean_init;
 xPlusCov_init   = sInitValues.xPlusCov_init;
@@ -10,6 +10,12 @@ xMinusMean  = zeros(size(sKalmanMatrices.F,2) , nSamples);
 xMinusCov   = zeros(size(sKalmanMatrices.F,2) , size(sKalmanMatrices.F,2) , nSamples);
 xPlusMean  = zeros(size(sKalmanMatrices.F,2) , nSamples);
 xPlusCov   = zeros(size(sKalmanMatrices.F,2) , size(sKalmanMatrices.F,2) , nSamples);
+weightFactor = zeros(nSamples,1); % eta / det(H)
+
+% prepare for weight-update:
+inv_H = inv(sKalmanMatrices.C);
+S_firstPart = inv_H * sKalmanMatrices.R * transpose(inv_H);
+
 K = zeros(size(xPlusCov));
 I = eye(2);
 for i = 1:nSamples
@@ -36,6 +42,12 @@ for i = 1:nSamples
     
     % symmetrize P:
     xPlusCov(:,:,i) = 0.5 * (xPlusCov(:,:,i) + transpose(xPlusCov(:,:,i)));
+    
+    % weight update:
+    S = S_firstPart + xMinusCov(:,:,i);
+    diffFromMean = inv_H * measurements(:,i) - xMinusMean(:,i);
+    eta = (exp(-0.5 * transpose(diffFromMean) / S * (diffFromMean) )) / (sqrt(det(2*pi*S)));
+    weightFactor(i) = eta / det(sKalmanMatrices.C);
 end
 
 
