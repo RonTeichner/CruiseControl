@@ -38,15 +38,15 @@ if enableFig
     roadZFft = roadZFft - prctile(roadZFft,90);
     
     [~,fVecZeroIdx] = min(abs(fVec));
-    hold all; plot(fVec(fVecZeroIdx:end)*100,roadZFft(fVecZeroIdx:end)); %xlabel('cycles @ 100 meter'); ylabel('[db]'); grid on; title('roadZ fft');
+    hold all; plot(fVec(fVecZeroIdx:end)*1000,roadZFft(fVecZeroIdx:end)); %xlabel('cycles @ 100 meter'); ylabel('[db]'); grid on; title('roadZ fft');
     %hold all; stem(maxFreq*100 , min(roadZFft)-10); %legend('roadZ fft','cutoff freq'); % ylim([-100,0]);
     
     
     
     %subplot(2,1,1);
-    plot(W*100,20*log10(abs(H)));
-    hold all; stem(maxFreq*100 , min(20*log10(abs(H)))-10);
-    xlabel('cycles @ 100 meter'); ylabel('gain [db]'); title('filter response'); grid on;
+    plot(W*1000,20*log10(abs(H)));
+    hold all; stem(maxFreq*1000 , min(20*log10(abs(H)))-10);
+    xlabel('cycles @ 1 Km'); ylabel('gain [db]'); title('filter response'); grid on;
     legend('road fft' , 'filter response' , 'cutoff freq');
     %ylim([-100,0]);
 end
