@@ -6,11 +6,11 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     A(2,1) = -1;
     A(2,2) = 0;
     
-    disp(['eigen-values of A are: ',mat2str(eig(A))]);
+    %disp(['eigen-values of A are: ',mat2str(eig(A))]);
     if max(real(eig(A))) < 0
-        disp('therefore the contineous-time system is stable');
+        %disp('therefore the contineous-time system is stable');
     else
-        disp('therefore the contineous-time system is not stable');
+        disp('therefore the contineous-time system is not stable !');
     end
     
     B = zeros(2,2);
@@ -34,9 +34,9 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     
     sKalmanMatrices.R = [max(1e-6 , ((stdFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((stdFactor)*sModelParams.controllerStateMeasure_std)^2)];
     
-    disp(['eigen-values of F are: ',mat2str(eig( sKalmanMatrices.F))]);
+    %disp(['eigen-values of F are: ',mat2str(eig( sKalmanMatrices.F))]);
     if max(abs(eig( sKalmanMatrices.F))) < 1
-        disp('therefore the discrete-time system is stable');
+        %disp('therefore the discrete-time system is stable');
     else
-        disp('therefore the discrete-time system is not stable');
+        disp('therefore the discrete-time system is not stable !');
     end

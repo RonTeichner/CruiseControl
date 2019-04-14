@@ -55,7 +55,13 @@ C = [1,0;0,1];
 observationNoise = [sModelParams.speedMeasure_std * randn(1,size(stateVec,2));...
     sModelParams.controllerStateMeasure_std * randn(1,size(stateVec,2))];
 
-y = C*stateVec + observationNoise;
+yNoNoise = C*stateVec; 
+y = yNoNoise + observationNoise;
+
+meanObserverNoNoisePower = mean(transpose(yNoNoise.^2));
+meanObserverNoisePower = mean(transpose(observationNoise.^2));
+
+disp(['speed & controller measure snr: ',mat2str(10*log10(meanObserverNoNoisePower ./ meanObserverNoisePower)),' db']);
 
 % it seems resnable to downsample y.
 desired_ySampleRate = 1; % [hz]
