@@ -226,6 +226,13 @@ end
 xlabel('sec'); ylabel('db'); title(['1/trace(cov); true sc model: ',int2str(csSim{1}.modelIdx)]);
 legend
 
+figure; hold all;
+for filteringIdx = 1:numel(csKalmanRes)
+    plot(csKalmanRes{filteringIdx}.tVec , -20*log10(squeeze(csKalmanRes{filteringIdx}.xPlusCov(1,1,:))),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx)]);
+end
+xlabel('sec'); ylabel('db'); title(['1/speedVar; true sc model: ',int2str(csSim{1}.modelIdx)]);
+legend
+
 % figure; 
 % for filteringIdx = 1:numel(csKalmanRes)
 %     subplot(numel(csKalmanRes),1,filteringIdx);

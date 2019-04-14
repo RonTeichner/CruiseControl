@@ -22,7 +22,8 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     ts = 1/y_fs; % [sec]
     
     fsFactor = x_fs/y_fs;
-    stdFactor = 1.1 * sqrt(fsFactor);
+    kalmanFactor = 1.1;
+    stdFactor = kalmanFactor * sqrt(fsFactor);
     
     sKalmanMatrices.F = expm(ts*A);
     I = eye(size(A));
@@ -32,7 +33,7 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     
     sKalmanMatrices.Q = [max(1e-6 , ((stdFactor)*sModelParams.std_b)^2) , 0 ; 0 , max(1e-6 , ((stdFactor)*sModelParams.std_e)^2)];
     
-    sKalmanMatrices.R = [max(1e-6 , ((stdFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((stdFactor)*sModelParams.controllerStateMeasure_std)^2)];
+    sKalmanMatrices.R = [max(1e-6 , ((kalmanFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((kalmanFactor)*sModelParams.controllerStateMeasure_std)^2)];
     
     %disp(['eigen-values of F are: ',mat2str(eig( sKalmanMatrices.F))]);
     if max(abs(eig( sKalmanMatrices.F))) < 1
