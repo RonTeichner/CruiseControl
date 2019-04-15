@@ -1,17 +1,17 @@
-function [ySampleRate,yD_tVec,yD,input_uD,sGroundTruth] = CruiseSimulator(sSimParams,sModelParams,sInputs)
+function [ySampleRate,yD_tVec,yD,input_uD,gearChangeD,sGroundTruth] = CruiseSimulator(sSimParams,sModelParams,sInputs)
 
 roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta; roadZ = sInputs.sRoad.roadZ;
 
 vRef = sInputs.vRef; % [m/s]
 ts = 1/sSimParams.fs;
 
-if sSimParams.enableGearChange
-    initStateVec(1) = 0;
-    gear = 1;
-else
-    initStateVec(1) = vRef;
-    gear = sModelParams.gear;
-end
+% if sSimParams.enableGearChange
+%     initStateVec(1) = 0;
+%     gear = 1;
+% else
+initStateVec(1) = vRef;
+gear = 3;%sModelParams.gear;
+% end
 initStateVec(2) = 0;
 
 nSamplesInSim = round(sSimParams.simDuration * sSimParams.fs);
@@ -22,7 +22,6 @@ u = zeros(nSamplesInSim,1);
 gears = zeros(nSamplesInSim,1);
 pos = zeros(nSamplesInSim,1);
 input_u = zeros(2,nSamplesInSim);
-
 stateVec(1,1) = initStateVec(1);
 stateVec(2,1) = initStateVec(2);
 
@@ -65,13 +64,13 @@ for i=2:nSamplesInSim
         if previousGearChangeTime + minTimeBetweenGearChanges < currentTime
             if abs(currentStateVec(1) - previousGearChangeSpeed) > minSpeedDiffBetweenGearChanges
                 if speedDirection == 1 % speed up
-                    if currentStateVec(1,1) > speedUpLimits(end)
+                    if currentStateVec(1,1) >= speedUpLimits(end)
                         gear = 5;
                     else
                         gear = find(speedUpLimits > currentStateVec(1,1) , 1);
                     end
                 elseif speedDirection == -1 % speed down
-                    if currentStateVec(1,1) < speedDownLimits(1)
+                    if currentStateVec(1,1) <= speedDownLimits(1)
                         gear = 1;
                     else
                         gear = 1 + find(speedDownLimits < currentStateVec(1,1) ,1,'last');
@@ -126,6 +125,20 @@ yD_tVec = tVec(1) + [0:(size(yD,2)-1)]./ySampleRate;
 input_uD(1,:) = input_u(1,1:yDownSampleRate:end);
 input_uD(2,:) = input_u(2,1:yDownSampleRate:end);
 
+gearChangeD = zeros(size(yD_tVec));
+for i=2:numel(gearChangeD)
+    startPeriodTime = yD_tVec(i-1);
+    endPeriodTime = yD_tVec(i);
+    
+    firstIdxAt_tVec = find(tVec - startPeriodTime > 0 , 1 , 'first');
+    lastIdxAt_tVec  = find(endPeriodTime <= tVec , 1 , 'first');
+    
+    if gears(lastIdxAt_tVec) > gears(firstIdxAt_tVec)
+        gearChangeD(i) = 1;
+    elseif gears(lastIdxAt_tVec) < gears(firstIdxAt_tVec)
+        gearChangeD(i) = -1;
+    end
+end
 
 
 

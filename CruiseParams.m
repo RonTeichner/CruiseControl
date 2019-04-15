@@ -58,6 +58,58 @@ else
     sModelParams.rho = 1.3; %[kg/m^3]
 end
 
+% create transition mat for gearChange = {-1,0,1};
+% transitionMat(r,c,u) is the chance of changing from gear r to gear c
+%   given u
+transitionMat(:,:,2) = eye(5); % 5 becuase number of gears
+
+% u = -1 - change down
+for r=1:5
+    for c=1:5
+        newGear = c;
+        oldGear = r;
+        if newGear > oldGear
+            transitionMat(oldGear,newGear,1) = 0;
+        else
+            if oldGear - newGear == 1
+                transitionMat(oldGear,newGear,1) = 0.9;
+            elseif newGear - oldGear == 0
+                transitionMat(oldGear,newGear,1) = 0;
+            else
+                if oldGear > 2
+                    transitionMat(oldGear,newGear,1) = 0.1/(oldGear-2);
+                else
+                    transitionMat(oldGear,newGear,1) = 0;
+                end
+            end
+        end
+    end
+end
+
+% u = 1 - change up
+for r=1:5
+    for c=1:5
+        newGear = c;
+        oldGear = r;
+        if newGear < oldGear
+            transitionMat(oldGear,newGear,3) = 0;
+        else
+            if newGear - oldGear == 1
+                transitionMat(oldGear,newGear,3) = 0.9;
+            elseif newGear - oldGear == 0
+                transitionMat(oldGear,newGear,3) = 0;
+            else
+                if oldGear < 4
+                    transitionMat(oldGear,newGear,3) = 0.1/(4-oldGear);
+                else
+                    transitionMat(oldGear,newGear,3) = 0;
+                end
+            end
+        end
+    end
+end
+sModelParams.transitionMat = transitionMat;
+
 nModels = numel(gears);
 for i=1:nModels
     csAllModels{i} = sModelParams;
