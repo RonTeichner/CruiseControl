@@ -27,7 +27,7 @@ stateVec(2,1) = initStateVec(2);
 
 % gear change logic:
 % min time between gear change is 4 seconds
-minTimeBetweenGearChanges = 5; % [sec]
+minTimeBetweenGearChanges = 15; % [sec]
 minSpeedDiffBetweenGearChanges = 10*1000/60/60; % [m/s]
 % we change the gears at certain speed when the speed growth and in
 % certain speed when speeds lowers:

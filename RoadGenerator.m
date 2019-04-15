@@ -1,6 +1,6 @@
 function [posVec,roadZAtPosVec,sin_theta_atPosVec] = RoadGenerator(simDistance)
 distance = 1000e3; % [m]
-peakHeight = 500;%300; % [m]
+peakHeight = 300; % [m]
 enableFig = true;
 [roadX,sin_theta,roadZ] = roadAngleGen(peakHeight,distance,enableFig);
 

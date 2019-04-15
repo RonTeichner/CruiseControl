@@ -1,12 +1,12 @@
 clear; close all; clc;
-newRoad = true;
+newRoad = false;
 newScenarios = true;
 
 vNominal_kph = 60; % [kph]
 kph2m_s = 1000/60/60;
 vNominal = vNominal_kph*kph2m_s; % [m/s]
 
-sSimParams.nSeed = round(1e7*rand);
+sSimParams.nSeed = 7707660;%round(1e7*rand);
 sSimParams.fs = 100; % [hz]
 sSimParams.simDuration = 30*60; % [sec]
 sSimParams.simDistance = max(10e3, sSimParams.simDuration * (2*vNominal)); % [m]
@@ -199,7 +199,8 @@ for filteringIdx = 1:numel(csKalmanRes)
     assert(numel(unique(csKalmanRes{filteringIdx}.kalmanModelIdx))==1)
     plot(csKalmanRes{filteringIdx}.tVec , 20*log10(csKalmanRes{filteringIdx}.weight),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
 end
-xlabel('sec'); ylabel('db'); ylim([-100 0]); title(['weights']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+xlabel('sec'); ylabel('db'); title(['weights']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+%ylim([-100 0]);
 legend
 
 linkaxes(ax,'x');
