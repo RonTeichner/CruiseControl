@@ -19,7 +19,7 @@ sModelParams.std_e = 0;%2*1000/60/60; % [m/s]
 sModelParams.std_b = 1e-2*1000/60/60; % [m/s]
 
 % snr of 10db for a speed of 80kph:
-snrDb = 10; % [db]
+snrDb = 20; % [db]
 speedPower = (80*1000/60/60)^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = speedPower/snrLin;
@@ -31,7 +31,7 @@ sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
 %disp(['evaluated speed snr is: ',int2str(evaluatedSpeedSnr),' db']);
 
 % snr of -100db for an accumulated error of 1000 [m]:
-snrDb = -100; % [db]
+snrDb = 20; % [db]
 accumulatedErrorPower = 1000^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = accumulatedErrorPower/snrLin;
@@ -58,56 +58,18 @@ else
     sModelParams.rho = 1.3; %[kg/m^3]
 end
 
-% create transition mat for gearChange = {-1,0,1};
-% transitionMat(r,c,u) is the chance of changing from gear r to gear c
-%   given u
-transitionMat(:,:,2) = eye(5); % 5 becuase number of gears
 
-% u = -1 - change down
-for r=1:5
-    for c=1:5
-        newGear = c;
-        oldGear = r;
-        if newGear > oldGear
-            transitionMat(oldGear,newGear,1) = 0;
-        else
-            if oldGear - newGear == 1
-                transitionMat(oldGear,newGear,1) = 0.9;
-            elseif newGear - oldGear == 0
-                transitionMat(oldGear,newGear,1) = 0;
-            else
-                if oldGear > 2
-                    transitionMat(oldGear,newGear,1) = 0.1/(oldGear-2);
-                else
-                    transitionMat(oldGear,newGear,1) = 0;
-                end
-            end
-        end
-    end
-end
+% transitionMat(r,c) is the chance of changing from gear r to gear c
+transitionMat = [ ...
+    [0 ; 0.5 ; 0.24 ; 0.20 ; 0.06] ,...
+    [0.25 ; 0 ; 0.25 ; 0.35 ; 0.15],...
+    [0.25 ; 0.30 ; 0 ; 0.30 ; 0.15],...
+    [0.15 ; 0.25 ; 0.30 ; 0 ; 0.30],...
+    [0.06 ; 0.20 ; 0.24 ; 0.5 ; 0]...
+    ];
 
-% u = 1 - change up
-for r=1:5
-    for c=1:5
-        newGear = c;
-        oldGear = r;
-        if newGear < oldGear
-            transitionMat(oldGear,newGear,3) = 0;
-        else
-            if newGear - oldGear == 1
-                transitionMat(oldGear,newGear,3) = 0.9;
-            elseif newGear - oldGear == 0
-                transitionMat(oldGear,newGear,3) = 0;
-            else
-                if oldGear < 4
-                    transitionMat(oldGear,newGear,3) = 0.1/(4-oldGear);
-                else
-                    transitionMat(oldGear,newGear,3) = 0;
-                end
-            end
-        end
-    end
-end
+
+
 sModelParams.transitionMat = transitionMat;
 
 nModels = numel(gears);

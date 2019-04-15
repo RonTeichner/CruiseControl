@@ -1,4 +1,4 @@
-function [xPlusMean , xPlusCov , weightFactor] = CruiseKalmanFilter(sKalmanMatrices,sInitValues,measurements,systemExternalInputs)
+function [xPlusMean , xPlusCov , weightFactor , xMinusMean , xMinusCov] = CruiseKalmanFilter(sKalmanMatrices,sInitValues,measurements,systemExternalInputs)
 
 xPlusMean_init  = sInitValues.xPlusMean_init;
 xPlusCov_init   = sInitValues.xPlusCov_init;
