@@ -27,7 +27,7 @@ stateVec(2,1) = initStateVec(2);
 
 % gear change logic:
 % min time between gear change is 4 seconds
-minTimeBetweenGearChanges = 4; % [sec]
+minTimeBetweenGearChanges = 15; % [sec]
 minSpeedDiffBetweenGearChanges = 10*1000/60/60; % [m/s]
 % we change the gears at certain speed when the speed growth and in
 % certain speed when speeds lowers:
@@ -113,8 +113,8 @@ meanObserverNoisePower = mean(transpose(observationNoise.^2));
 disp(['speed & controller measure snr: ',mat2str(10*log10(meanObserverNoNoisePower ./ meanObserverNoisePower)),' db']);
 
 % it seems resnable to downsample y.
-desired_ySampleRate = 1; % [hz]
-yDownSampleRate = round(sSimParams.fs/desired_ySampleRate);
+%desired_ySampleRate = 1; % [hz]
+yDownSampleRate = round(sSimParams.fs/sSimParams.desired_ySampleRate);
 ySampleRate = sSimParams.fs / yDownSampleRate;
 
 % downsample:

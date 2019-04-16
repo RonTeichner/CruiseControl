@@ -8,28 +8,24 @@ csKalmanResSingleInferReset.kalmanModelIdx  = csKalmanResInferCont{1}.kalmanMode
 csKalmanResSingleInferReset.tVec            = csKalmanResInferCont{1}.tVec;
 csKalmanResSingleInferReset.xPlusMean       = csKalmanResInferCont{1}.xPlusMean;
 csKalmanResSingleInferReset.xPlusCov        = csKalmanResInferCont{1}.xPlusCov;
+csKalmanResSingleInferReset.xMinusMean       = csKalmanResInferCont{1}.xMinusMean;
+csKalmanResSingleInferReset.xMinusCov        = csKalmanResInferCont{1}.xMinusCov;
 csKalmanResSingleInferReset.xPlusCovTrace   = csKalmanResInferCont{1}.xPlusCovTrace;
 
 % weight update:
-xMinus = sKalmanMatricesRst.F * sInitValuesRst.xPlusMean_init;
-pMinus = sKalmanMatricesRst.F * sInitValuesRst.xPlusCov_init * transpose(sKalmanMatricesRst.F) + sKalmanMatricesRst.Q;
+xMinus = csKalmanResSingleInferReset.xMinusMean;
+pMinus = csKalmanResSingleInferReset.xMinusCov;
 
 
-if sScenario.currentControl == -1 % change down
-    transitionMat = squeeze(transitionMat(:,:,1));
-elseif sScenario.currentControl == 1 % change up
-    transitionMat = squeeze(transitionMat(:,:,3));
-end
-
-transitionVec = transitionMat(:,sKalmanMatricesRst.modelIdx);
-
-delta = (allWeightsRst*transitionVec) * sInitValuesRst.weight ;
+transitionVec = transpose(transitionMat(:,sKalmanMatricesRst.modelIdx));
+allWeightsRst = transpose(allWeightsRst);
+delta = (transitionVec*allWeightsRst);
 
 gaussianMean = sKalmanMatricesRst.C*xMinus;
 gauusianCov = sKalmanMatricesRst.C * pMinus * transpose(sKalmanMatricesRst.C) + sKalmanMatricesRst.R;
 
 % sample y from the gauusian:
 y = sScenario.y;
-yProb = (2*pi)^(-1) * (det(gauusianCov))^(-0.5) * exp(-0.5 * transpose(y - gaussianMean) * inv(gauusianCov) * (y - gaussianMean));
+yProb = (1/sqrt( (2*pi)^2 * det(gauusianCov) )) * exp(-0.5 * transpose(y - gaussianMean) * inv(gauusianCov) * (y - gaussianMean));
 
 csKalmanResSingleInferReset.weight = yProb * delta;
