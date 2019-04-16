@@ -1,8 +1,9 @@
-function csKalmanResSingleInferReset = SingleFilterInferReset(sKalmanMatricesRst , allWeightsRst, sInitValuesRst , sScenario , transitionMat)
+function csKalmanResSingleInferReset = SingleFilterInferReset(sKalmanMatricesRst , allWeightsRst, allLogWeightsRst , sInitValuesRst , sScenario , transitionMat)
 
 % calculate the gaussian using infer cont:
 sInitValues{1} = sInitValuesRst; sKalmanMatrices{1} = sKalmanMatricesRst;
-csKalmanResInferCont                        = AllFiltersInferCont(sKalmanMatrices, sInitValues , sScenario);
+enableNormalizeWeights = false;
+csKalmanResInferCont                        = AllFiltersInferCont(sKalmanMatrices, sInitValues , sScenario , enableNormalizeWeights);
 
 csKalmanResSingleInferReset.kalmanModelIdx  = csKalmanResInferCont{1}.kalmanModelIdx;
 csKalmanResSingleInferReset.tVec            = csKalmanResInferCont{1}.tVec;
@@ -21,11 +22,17 @@ transitionVec = transpose(transitionMat(:,sKalmanMatricesRst.modelIdx));
 allWeightsRst = transpose(allWeightsRst);
 delta = (transitionVec*allWeightsRst);
 
+logTransitionVec = log(transitionVec);
+logMult = logTransitionVec + allLogWeightsRst;
+logDelta = log(sum(exp(logMult)));
+
 gaussianMean = sKalmanMatricesRst.C*xMinus;
 gauusianCov = sKalmanMatricesRst.C * pMinus * transpose(sKalmanMatricesRst.C) + sKalmanMatricesRst.R;
 
 % sample y from the gauusian:
 y = sScenario.y;
 yProb = (1/sqrt( (2*pi)^2 * det(gauusianCov) )) * exp(-0.5 * transpose(y - gaussianMean) * inv(gauusianCov) * (y - gaussianMean));
+log_yProb = - log(2*pi) - 0.5*log(det(gauusianCov)) + (-0.5 * transpose(y - gaussianMean) * inv(gauusianCov) * (y - gaussianMean));
 
 csKalmanResSingleInferReset.weight = yProb * delta;
+csKalmanResSingleInferReset.logWeight = log_yProb + logDelta;

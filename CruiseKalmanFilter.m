@@ -1,5 +1,6 @@
-function [xPlusMean , xPlusCov , weightFactor , xMinusMean , xMinusCov] = CruiseKalmanFilter(sKalmanMatrices,sInitValues,measurements,systemExternalInputs)
+function [xPlusMean , xPlusCov , weightFactor , xMinusMean , xMinusCov , logWeightFactor] = CruiseKalmanFilter(sKalmanMatrices,sInitValues,sScenario)
 
+measurements = sScenario.y;
 xPlusMean_init  = sInitValues.xPlusMean_init;
 xPlusCov_init   = sInitValues.xPlusCov_init;
 uInput_init     = sInitValues.uInput_init;
@@ -11,6 +12,7 @@ xMinusCov   = zeros(size(sKalmanMatrices.F,2) , size(sKalmanMatrices.F,2) , nSam
 xPlusMean  = zeros(size(sKalmanMatrices.F,2) , nSamples);
 xPlusCov   = zeros(size(sKalmanMatrices.F,2) , size(sKalmanMatrices.F,2) , nSamples);
 weightFactor = zeros(nSamples,1); % eta / det(H)
+logWeightFactor = zeros(nSamples,1); % logEta - det(H)
 
 % prepare for weight-update:
 inv_H = inv(sKalmanMatrices.C);
@@ -21,7 +23,8 @@ I = eye(2);
 for i = 1:nSamples
     % predictor:
     if i > 1
-        xMinusMean(:,i) = sKalmanMatrices.F * xPlusMean(:,i-1) + sKalmanMatrices.G * systemExternalInputs(:,i-1);
+        systemExternalInputs = sScenario.input_u(:,i-1);
+        xMinusMean(:,i) = sKalmanMatrices.F * xPlusMean(:,i-1) + sKalmanMatrices.G * systemExternalInputs;
         xMinusCov(:,:,i) = sKalmanMatrices.F * xPlusCov(:,:,i-1) * transpose(sKalmanMatrices.F) + sKalmanMatrices.Q;
     else % first iteration from init values
         xMinusMean(:,i) = sKalmanMatrices.F * xPlusMean_init + sKalmanMatrices.G * uInput_init;
@@ -47,7 +50,9 @@ for i = 1:nSamples
     S = S_firstPart + xMinusCov(:,:,i);
     diffFromMean = inv_H * measurements(:,i) - xMinusMean(:,i);
     eta = (exp(-0.5 * transpose(diffFromMean) / S * (diffFromMean) )) / (sqrt(det(2*pi*S)));
+    logEta = (-0.5 * transpose(diffFromMean) / S * (diffFromMean) ) - log(sqrt(det(2*pi*S)));
     weightFactor(i) = eta / det(sKalmanMatrices.C);
+    logWeightFactor(i) = logEta - log(det(sKalmanMatrices.C));
 end
 
 

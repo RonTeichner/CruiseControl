@@ -1,6 +1,6 @@
 function [ySampleRate,yD_tVec,yD,input_uD,gearChangeD,sGroundTruth] = CruiseSimulator(sSimParams,sModelParams,sInputs)
 
-roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta; roadZ = sInputs.sRoad.roadZ;
+roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta;
 
 vRef = sInputs.vRef; % [m/s]
 ts = 1/sSimParams.fs;
@@ -51,6 +51,7 @@ for i=2:nSamplesInSim
     
     input_u(:,i-1) = [vRef ; sinTheta];
     
+    % gear change:
     if sSimParams.enableGearChange
         
         if currentStateVec(1) - previousGearChangeSpeed > minSpeedDiffBetweenGearChanges

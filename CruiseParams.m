@@ -16,10 +16,10 @@ sModelParams.g = 9.8; % [m/sec^2]
 % noises:
 sModelParams.std_e = 0;%2*1000/60/60; % [m/s]
 % this is not a good noise
-sModelParams.std_b = 1e-2*1000/60/60; % [m/s]
+sModelParams.std_b = 1e-3*1000/60/60; % [m/s]
 
 % snr of 10db for a speed of 80kph:
-snrDb = 20; % [db]
+snrDb = 30; % [db]
 speedPower = (80*1000/60/60)^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = speedPower/snrLin;
@@ -31,7 +31,7 @@ sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
 %disp(['evaluated speed snr is: ',int2str(evaluatedSpeedSnr),' db']);
 
 % snr of -100db for an accumulated error of 1000 [m]:
-snrDb = 20; % [db]
+snrDb = 30; % [db]
 accumulatedErrorPower = 1000^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = accumulatedErrorPower/snrLin;

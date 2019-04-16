@@ -1,6 +1,6 @@
 clear; close all; clc;
 newRoad = false;
-newScenarios = true;
+newScenarios = false;
 
 vNominal_kph = 60; % [kph]
 kph2m_s = 1000/60/60;
@@ -68,6 +68,9 @@ end
 figure;
 for gearIdx = 1:5
     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
+    if ~any(gearsIdx{1})
+        gearsIdx{gearIdx}(1) = 1;
+    end
 end
 scIdx = 1;
 ax(1) = subplot(4,1,1); hold all;
@@ -170,6 +173,7 @@ for modelIdx = 1:nModels
     sInitValues{modelIdx}.xPlusCov_init       = [(5*kph2m_s)^2 , 0 ; 0 , 50^2];
     sInitValues{modelIdx}.uInput_init         = uInput_init;
     sInitValues{modelIdx}.weight              = 1/nModels;
+    sInitValues{modelIdx}.logWeight           = -log(nModels);
     sKalmanMatrices{modelIdx}.modelIdx        = modelIdx;
 end
 %% run inference:
@@ -200,7 +204,37 @@ for filteringIdx = 1:numel(csKalmanRes)
     plot(csKalmanRes{filteringIdx}.tVec , 20*log10(csKalmanRes{filteringIdx}.weight),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
 end
 xlabel('sec'); ylabel('db'); title(['weights']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
-%ylim([-100 0]);
+ylim([-30 0]);
+legend
+
+linkaxes(ax,'x');
+
+figure;
+scIdx = 1;
+
+for gearIdx = 1:5
+    gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
+end
+scIdx = 1;
+ax(1) = subplot(2,1,1); hold all;
+for gearIdx = 1:5
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
+end
+legend
+
+
+ax(2) = subplot(2,1,2); hold all;
+for filteringIdx = 1:numel(csKalmanRes)
+    assert(numel(unique(csKalmanRes{filteringIdx}.kalmanModelIdx))==1)
+    log10Weight = (csKalmanRes{filteringIdx}.logWeight) ./ log(10);
+    plot(csKalmanRes{filteringIdx}.tVec , 20*log10Weight,'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
+end
+xlabel('sec'); ylabel('db'); title(['weights (logPropagation)']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+ylim([-30 0]);
 legend
 
 linkaxes(ax,'x');

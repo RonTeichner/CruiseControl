@@ -22,8 +22,9 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     ts = 1/y_fs; % [sec]
     
     fsFactor = x_fs/y_fs;
-    kalmanFactor = 1.1;
-    stdFactor = kalmanFactor * sqrt(fsFactor);
+    kalmanFactor = 1.2;
+    beingInWrongParametersSetFactor = 10;
+    processNoiseStdFactor = beingInWrongParametersSetFactor * kalmanFactor * sqrt(fsFactor);
     
     sKalmanMatrices.F = expm(ts*A);
     I = eye(size(A));
@@ -31,7 +32,12 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     
     sKalmanMatrices.C = [1 0 ; 0 1];
     
-    sKalmanMatrices.Q = [max(1e-6 , ((stdFactor)*sModelParams.std_b)^2) , 0 ; 0 , max(1e-6 , ((stdFactor)*sModelParams.std_e)^2)];
+    % the main process noise is actually not due to process but to the
+    % decimation. because of the decimation we might be in a situation that
+    % we switch gear long before the decimated measurement is received. 
+    % It can be up to 5 m/s for v and 3 m for z
+    %sKalmanMatrices.Q = [max(1e-6 , ((processNoiseStdFactor)*sModelParams.std_b)^2) , 0 ; 0 , max(1e-6 , ((processNoiseStdFactor)*sModelParams.std_e)^2)];
+    sKalmanMatrices.Q = [3^2 , 0 ; 0 , 2^2];
     
     sKalmanMatrices.R = [max(1e-6 , ((kalmanFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((kalmanFactor)*sModelParams.controllerStateMeasure_std)^2)];
     
