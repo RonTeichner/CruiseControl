@@ -4,7 +4,7 @@ nModels = numel(sKalmanMatrices);
 
 
 for modelIdx = 1:nModels
-    [xPlusMean , xPlusCov , weightFactor] = CruiseKalmanFilter(sKalmanMatrices{modelIdx},sInitValues{modelIdx}, sScenario.y, sScenario.input_u);
+    [xPlusMean , xPlusCov , weightFactor , logWeightFactor] = CruiseKalmanFilter(sKalmanMatrices{modelIdx},sInitValues{modelIdx}, sScenario.y, sScenario.input_u);
     
     filteringIdx = filteringIdx + 1;
     
@@ -14,13 +14,13 @@ for modelIdx = 1:nModels
     csKalmanRes{filteringIdx}.sInitValues       = sInitValues{modelIdx};
     %csKalmanRes{filteringIdx}.scenarioIdx       = 1;
     csKalmanRes{filteringIdx}.tVec              = sScenario.y_tVec;
-    csKalmanRes{filteringIdx}.xPlusMean = xPlusMean; csKalmanRes{filteringIdx}.xPlusCov = xPlusCov; csKalmanRes{filteringIdx}.weightFactor = weightFactor;
+    csKalmanRes{filteringIdx}.xPlusMean = xPlusMean; csKalmanRes{filteringIdx}.xPlusCov = xPlusCov; csKalmanRes{filteringIdx}.weightFactor = weightFactor; csKalmanRes{filteringIdx}.logWeightFactor = logWeightFactor;
     for timeIdx = 1:size(xPlusCov,3)
         csKalmanRes{filteringIdx}.xPlusCovTrace(timeIdx) = trace(xPlusCov(:,:,timeIdx));
     end
 end
 
-% calculate weight after every time-step:
+%% calculate weight after every time-step:
 nTimeSteps  = numel(sScenario.y(1,:));
 nFilters    = numel(csKalmanRes);
 for timeIdx = 1:nTimeSteps
