@@ -67,7 +67,11 @@ else
         sScenarioCropped.currentControl = currentControl;
         
         if ~sSimParams.returnToInitValueInReset
-            for k=1:numel(csKalmanResInferCont)
+            for k=1:numel(csKalmanResInferCont) 
+                % there is no logic here! we know there was a gear change, 
+                % so why think the most probable previous state-vector is
+                % from the same kalman?
+                % Need to develop more gaussians and collapse them. 
                 sInitValuesForInferReset{k}.xPlusMean_init      = csKalmanRes{k}.xPlusMean(:,indexBeforeControl);
                 sInitValuesForInferReset{k}.xPlusCov_init       = csKalmanRes{k}.xPlusCov(:,:,indexBeforeControl);
             end

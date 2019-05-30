@@ -1,6 +1,6 @@
 clear; close all; clc;
-newRoad = false;
-newScenarios = false;
+newRoad = true;
+newScenarios = true;
 
 vNominal_kph = 60; % [kph]
 kph2m_s = 1000/60/60;
