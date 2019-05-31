@@ -1,6 +1,6 @@
 clear; close all; clc;
 newRoad = false;
-newScenarios = true;
+newScenarios = false;
 
 vNominal_kph = 60; % [kph]
 kph2m_s = 1000/60/60;
@@ -181,7 +181,7 @@ end
 csKalmanRes = InferenceScheme(csSim{1} , sKalmanMatrices , sInitValues , sSimParams , csAllModels);
 
 
-% Barber:
+% Barber Filtering:
 I = 1;
 
 y = csSim{1}.y; u = csSim{1}.input_u;
@@ -202,7 +202,11 @@ end
 %     priorS(s,1) = sInitValues{gearIdx}.weight;
 % %end
 
-[xEstMean, xEstCov, alpha, w, loglik] = SLDSforward(y,u,switchTimeIndexes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I);
+[xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, loglik] = SLDSforward(y,u,switchTimeIndexes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I);
+
+% smoothing:
+doEC = true; J = 1;
+[xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
 %% ANALYZE
 
 % my inference:
@@ -326,7 +330,36 @@ for filteringIdx = 1:S
     
     plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
 end
-xlabel('sec'); title(['weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+xlabel('sec'); title(['filtered weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+%ylim([-30 0]);
+legend
+
+linkaxes(ax,'x');
+
+figure;
+scIdx = 1;
+
+for gearIdx = 1:5
+    gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
+end
+scIdx = 1;
+ax(1) = subplot(2,1,1); hold all;
+for gearIdx = 1:5
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
+end
+legend
+
+
+ax(2) = subplot(2,1,2); hold all;
+for filteringIdx = 1:S
+    
+    plot(csSim{1}.y_tVec , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
+end
+xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 %ylim([-30 0]);
 legend
 

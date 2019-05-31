@@ -1,4 +1,4 @@
-function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,switchTimes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I)
+function [xEstMean, xEstCov, xEstMinusMean, xEstMinusCov, alpha, w, loglik] = SLDSforward(y,u,switchTimes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I)
 %SLDSFORWARD Switching Latent Linear Dynamical System Gaussian Sum forward pass
 %  [f F alpha w loglik]=SLDSforward(v,A,B,CovH,CovV,meanH,meanV,CovP,meanP,tranS,priorS,I)
 %
@@ -12,7 +12,7 @@ function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,switchTimes,F,G,H
 % Inputs:
 % y             : observations                  - [Y x T]
 % u             : input control                 - [U x T]
-% switchTimes   : known time in which there is a switch. at this index there is a switch in gear. 
+% switchTimes   : known time in which there is a switch. at this index there is a switch in gear.
 % F             : transition-autonumous matrix  - [N x N x S]
 % G             : transition control            - [N x U x S]
 % H             : emission matrix               - [Y x N x S]
@@ -21,7 +21,7 @@ function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,switchTimes,F,G,H
 % xInitCov      : initial prior                 - [N x N]
 % xInitMean     : initial mean                  - [N x 1]
 % uInit         : initial control               - [U x 1]
-% transS        : switch transition distribution- [S x S]; 
+% transS        : switch transition distribution- [S x S];
 %                 tranS(st,s) - probability of changing from s to st
 % prior         : switch initial distribution   - [S x 1]
 % I             : number of Gaussian components in the Gaussian Sum approximation
@@ -29,12 +29,14 @@ function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,switchTimes,F,G,H
 % Outputs:
 % xEstMean      : filterered mean p(h(t|v(1:t))
 % xEstCov       : filterered covariance p(h(t)|v(1:t))
+% xEstMinusMean : filtered mean prior to measurement recieved   -[N x I x S x S x T] dim(3) is previous state, dim(4) is current
+% xEstMinusCov  : filtered cov prior to measurement recieved    -[N x N x I x S x S x T] dim(4) is previous state, dim(5) is current
 % alpha         : filtered switch distribution p(s(t)|v(1:t))
 % w             : mixture weights
 % loglik        : log likelihod of the sequence log p(v(1:T))
 
 % See also SLDSbackward.m, demoSLDStraffic.m
-import brml.*
+%import brml.*
 S=size(F,3); T=size(y,2); N=size(F,1); % N - number of state variables
 w=zeros(I,S,T); loglik=0;
 xEstMean=zeros(N,I,S,T); xEstCov=zeros(N,N,I,S,T);
@@ -45,12 +47,12 @@ xEstMean=zeros(N,I,S,T); xEstCov=zeros(N,N,I,S,T);
 % meanV = zeros(size(y,1),S);
 
 % first time-step (t=1)
-for s=1:S    
-    [xEstMean(:,1,s,1), xEstCov(:,:,1,s,1), logphat] = LDSforwardUpdate(...
-                        xInitMean, xInitCov, ...
-                        y(:,1), uInit, ...
-                        F(:,:,s), G(:,:,s), H(:,:,s), Q(:,:,s), R(:,:,s));
-        
+for s=1:S
+    [xEstMean(:,1,s,1), xEstCov(:,:,1,s,1), ~, ~, logphat] = LDSforwardUpdate(...
+        xInitMean, xInitCov, ...
+        y(:,1), uInit, ...
+        F(:,:,s), G(:,:,s), H(:,:,s), Q(:,:,s), R(:,:,s));
+    
     logalpha(s,1) = sumlog(priorS(s))+logphat;
 end
 alpha(:,1)=condexp(logalpha);
@@ -64,13 +66,13 @@ for t=2:T
         for i=1:Itm
             for s=1:S
                 ind=ind+1; % ind represents a specific combination of state and gaussian component
-                % previous state was s and gaussian component was i, current state is st:                
-                [mu(:,ind), Sigma(:,:,ind), logphat] = LDSforwardUpdate(...
+                % previous state was s and gaussian component was i, current state is st:
+                [mu(:,ind), Sigma(:,:,ind), ~, ~, logphat] = LDSforwardUpdate(...
                     xEstMean(:,i,s,t-1), xEstCov(:,:,i,s,t-1),...
                     y(:,t), u(:,t-1), ...
                     F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
-                if switchFlag 
-                    switchProb = tranS(st,s); 
+                if switchFlag
+                    switchProb = tranS(st,s);
                 else
                     switchProb = (s == st);
                 end
@@ -84,4 +86,27 @@ for t=2:T
     end
     alpha(:,t) = condexp(logalpha);
     loglik = loglik + logsumexp(logp(:),ones(S*ind,1));
+end
+
+% run only to calculate x_minus:
+xEstMinusMean = zeros(size(xEstMean)); xEstMinusCov = zeros(size(xEstCov));
+zerosY = zeros(size(y(:,1)));
+for t=1:T
+    for st=1:S
+        for i=1:I
+            for s=1:S
+                if t > 1
+                    [~, ~, xEstMinusMean(:,i,s,st,t), xEstMinusCov(:,:,i,s,st,t), ~] = LDSforwardUpdate(...
+                        xEstMean(:,i,s,t-1), xEstCov(:,:,i,s,t-1),...
+                        zerosY, u(:,t-1), ...
+                        F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
+                else
+                    [~, ~, xEstMinusMean(:,i,s,st,t), xEstMinusCov(:,:,i,s,st,t), ~] = LDSforwardUpdate(...
+                        xInitMean, xInitCov, ...
+                        zerosY, uInit, ...
+                        F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
+                end
+            end
+        end
+    end
 end

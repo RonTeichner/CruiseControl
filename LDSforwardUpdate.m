@@ -1,4 +1,4 @@
-function [x_plus_at_k, P_plus_at_k, logpvgv, myLogWeightFactor]=LDSforwardUpdate(x_plus_at_k_minus1,P_plus_at_k_minus1,y_k,u_at_k_minus1,F,G,H,Q,R)
+function [x_plus_at_k, P_plus_at_k, x_minus_at_k, P_minus_at_k, logpvgv, myLogWeightFactor]=LDSforwardUpdate(x_plus_at_k_minus1,P_plus_at_k_minus1,y_k,u_at_k_minus1,F,G,H,Q,R)
 %LDSFORWARDUPDATE Single Forward update for a Latent Linear Dynamical System (Kalman Filter)
 
 %
@@ -16,6 +16,8 @@ function [x_plus_at_k, P_plus_at_k, logpvgv, myLogWeightFactor]=LDSforwardUpdate
 % Outputs:
 % x_plus_at_k           : filterered mean p(h(t+1)|v(1:t+1))
 % P_plus_at_k           : filterered covariance p(h(t+1)|v(1:t+1))
+% x_minus_at_k
+% P_minus_at_k
 % logpgvg               : log p(v(t+1)|v(1:t))
 % myLogWeightFactor     : weight update factor (log)
 
