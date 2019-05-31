@@ -1,4 +1,4 @@
-function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,F,G,H,Q,R,xInitCov,xInitMean,tranS,priorS,I)
+function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,switchTimes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I)
 %SLDSFORWARD Switching Latent Linear Dynamical System Gaussian Sum forward pass
 %  [f F alpha w loglik]=SLDSforward(v,A,B,CovH,CovV,meanH,meanV,CovP,meanP,tranS,priorS,I)
 %
@@ -12,6 +12,7 @@ function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,F,G,H,Q,R,xInitCo
 % Inputs:
 % y             : observations                  - [Y x T]
 % u             : input control                 - [U x T]
+% switchTimes   : known time in which there is a switch. at this index there is a switch in gear. 
 % F             : transition-autonumous matrix  - [N x N x S]
 % G             : transition control            - [N x U x S]
 % H             : emission matrix               - [Y x N x S]
@@ -19,7 +20,9 @@ function [xEstMean, xEstCov, alpha, w, loglik]=SLDSforward(y,u,F,G,H,Q,R,xInitCo
 % R             : emission covariance           - [Y x Y x S]
 % xInitCov      : initial prior                 - [N x N]
 % xInitMean     : initial mean                  - [N x 1]
-% transS        : switch transition distribution- [S x S]
+% uInit         : initial control               - [U x 1]
+% transS        : switch transition distribution- [S x S]; 
+%                 tranS(st,s) - probability of changing from s to st
 % prior         : switch initial distribution   - [S x 1]
 % I             : number of Gaussian components in the Gaussian Sum approximation
 %
@@ -42,11 +45,10 @@ xEstMean=zeros(N,I,S,T); xEstCov=zeros(N,N,I,S,T);
 % meanV = zeros(size(y,1),S);
 
 % first time-step (t=1)
-for s=1:S
-    u_at_k_minus1 = zeros(size(u(:,1)));
+for s=1:S    
     [xEstMean(:,1,s,1), xEstCov(:,:,1,s,1), logphat] = LDSforwardUpdate(...
                         xInitMean, xInitCov, ...
-                        y(:,1), u_at_k_minus1, ...
+                        y(:,1), uInit, ...
                         F(:,:,s), G(:,:,s), H(:,:,s), Q(:,:,s), R(:,:,s));
         
     logalpha(s,1) = sumlog(priorS(s))+logphat;
@@ -56,6 +58,7 @@ w(1,:,1)=1;
 % remaining time-steps:
 for t=2:T
     if t==2;Itm=1; else Itm=I;end
+    if any(t==switchTimes); switchFlag = true; else switchFlag = false; end
     for st=1:S
         ind=0;
         for i=1:Itm
@@ -66,8 +69,12 @@ for t=2:T
                     xEstMean(:,i,s,t-1), xEstCov(:,:,i,s,t-1),...
                     y(:,t), u(:,t-1), ...
                     F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
-                
-                logp(st,ind) = sumlog([w(i,s,t-1) tranS(st,s) alpha(s,t-1)]) + logphat;
+                if switchFlag 
+                    switchProb = tranS(st,s); 
+                else
+                    switchProb = (s == st);
+                end
+                logp(st,ind) = sumlog([w(i,s,t-1) switchProb alpha(s,t-1)]) + logphat;
             end
         end
         % collapse:

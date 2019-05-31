@@ -1,5 +1,5 @@
 clear; close all; clc;
-newRoad = true;
+newRoad = false;
 newScenarios = true;
 
 vNominal_kph = 60; % [kph]
@@ -177,9 +177,35 @@ for modelIdx = 1:nModels
     sKalmanMatrices{modelIdx}.modelIdx        = modelIdx;
 end
 %% run inference:
+% my derivation:
 csKalmanRes = InferenceScheme(csSim{1} , sKalmanMatrices , sInitValues , sSimParams , csAllModels);
+
+
+% Barber:
+I = 1;
+
+y = csSim{1}.y; u = csSim{1}.input_u;
+xInitMean = sInitValues{3}.xPlusMean_init; xInitCov = sInitValues{3}.xPlusCov_init; uInit = sInitValues{3}.uInput_init; 
+tranS = transpose(csAllModels{1}.transitionMat);
+switchTimeIndexes = find(csSim{1}.gearChange ~= 0);
+
+S = numel(sKalmanMatrices);
+for s=1:S
+    F(:,:,s) = sKalmanMatrices{s}.F; G(:,:,s) = sKalmanMatrices{s}.G; H(:,:,s) = sKalmanMatrices{s}.C; Q(:,:,s) = sKalmanMatrices{s}.Q; R(:,:,s) = sKalmanMatrices{s}.R;
+    priorS(s,1) = sInitValues{s}.weight;
+end
+
+% %S = numel(sKalmanMatrices);
+% %for s=1:S
+% gearIdx = 3; s = 1; S = 1;
+%     F(:,:,s) = sKalmanMatrices{gearIdx}.F; G(:,:,s) = sKalmanMatrices{gearIdx}.G; H(:,:,s) = sKalmanMatrices{gearIdx}.C; Q(:,:,s) = sKalmanMatrices{gearIdx}.Q; R(:,:,s) = sKalmanMatrices{gearIdx}.R;
+%     priorS(s,1) = sInitValues{gearIdx}.weight;
+% %end
+
+[xEstMean, xEstCov, alpha, w, loglik] = SLDSforward(y,u,switchTimeIndexes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I);
 %% ANALYZE
 
+% my inference:
 figure;
 scIdx = 1;
 
@@ -239,6 +265,8 @@ legend
 
 linkaxes(ax,'x');
 
+
+
 % subplot(3,1,3); hold all;
 % for filteringIdx = 1:numel(csKalmanRes)
 %     plot(csKalmanRes{filteringIdx}.tVec , -20*log10(csKalmanRes{filteringIdx}.xPlusCovTrace),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx)]);
@@ -273,3 +301,33 @@ linkaxes(ax,'x');
 %     title('filtered control-z'); legend('filtered','true');
 % 
 % end
+
+% barbel:
+figure;
+scIdx = 1;
+
+for gearIdx = 1:5
+    gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
+end
+scIdx = 1;
+ax(1) = subplot(2,1,1); hold all;
+for gearIdx = 1:5
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
+end
+legend
+
+
+ax(2) = subplot(2,1,2); hold all;
+for filteringIdx = 1:S
+    
+    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
+end
+xlabel('sec'); title(['weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+%ylim([-30 0]);
+legend
+
+linkaxes(ax,'x');

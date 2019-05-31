@@ -21,7 +21,7 @@ function [x_plus_at_k, P_plus_at_k, logpvgv, myLogWeightFactor]=LDSforwardUpdate
 
 % meanF : transition mean
 % meanV : emission mean
-meanF = 0; meanV = 0;
+meanF = zeros(size(x_plus_at_k_minus1)); meanV = zeros(size(y_k(:,1)));
 
 if isvector(Q); Q=diag(Q); end
 if isvector(R); R=diag(R); end
