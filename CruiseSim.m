@@ -250,7 +250,7 @@ if sSimParams.doMyFiltering
         gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
     end
     scIdx = 1;
-    ax(1) = subplot(2,1,1); hold all;
+    ax(3) = subplot(2,1,1); hold all;
     for gearIdx = 1:5
         if any(gearsIdx{gearIdx})
             plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
@@ -261,7 +261,7 @@ if sSimParams.doMyFiltering
     legend
     
     
-    ax(2) = subplot(2,1,2); hold all;
+    ax(4) = subplot(2,1,2); hold all;
     for filteringIdx = 1:numel(csKalmanRes)
         assert(numel(unique(csKalmanRes{filteringIdx}.kalmanModelIdx))==1)
         log10Weight = (csKalmanRes{filteringIdx}.logWeight) ./ log(10);
@@ -318,27 +318,27 @@ for gearIdx = 1:5
     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
 end
 scIdx = 1;
-ax(1) = subplot(2,1,1); hold all;
+bx(1) = subplot(2,1,1); hold all;
 for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
-        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
     else
-        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
     end
 end
 legend
 
 
-ax(2) = subplot(2,1,2); hold all;
+bx(2) = subplot(2,1,2); hold all;
 for filteringIdx = 1:S
     
-    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)]);
+    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(2));
 end
 xlabel('sec'); title(['filtered weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 ylim([0 1]);
 legend
 
-linkaxes(ax,'x');
+linkaxes(bx,'x');
 
 figure;
 scIdx = 1;
@@ -347,32 +347,63 @@ for gearIdx = 1:5
     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
 end
 scIdx = 1;
-ax(1) = subplot(2,1,1); hold all;
+bx(3) = subplot(2,1,1); hold all;
 for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
-        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(3)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
     else
-        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(3)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
     end
 end
 legend
 
 
-ax(2) = subplot(2,1,2); hold all;
+bx(4) = subplot(2,1,2); hold all;
 for filteringIdx = 1:S
     
-    plot(csSim{1}.y_tVec , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)]);
+    plot(csSim{1}.y_tVec , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(4));
 end
 xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 ylim([0 1]);
 legend
 
-linkaxes(ax,'x');
+linkaxes(bx,'x');
 
 % debug:
 % smoothing:
 doEC = true; J = 1;
 maxTime = 1680; % [sec];
 maxTimeIdx = find(csSim{1}.y_tVec > maxTime,1,'first');
-
+xEstfMean = xEstfMean(:,:,:,1:maxTimeIdx); xEstfCov = xEstfCov(:,:,:,:,1:maxTimeIdx);
+xEstfMinus_mean = xEstfMinus_mean(:,:,:,:,1:maxTimeIdx); xEstfMinus_cov = xEstfMinus_cov(:,:,:,:,:,1:maxTimeIdx);
+alpha = alpha(:,1:maxTimeIdx); w = w(:,:,1:maxTimeIdx);
 [xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
+
+figure;
+
+for gearIdx = 1:5
+    gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
+end
+scIdx = 1;
+bx(5) = subplot(2,1,1); hold all;
+for gearIdx = 1:5
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
+end
+legend
+
+bx(6) = subplot(2,1,2);
+hold all;
+
+for filteringIdx = 1:S
+    
+    plot(csSim{1}.y_tVec(1:maxTimeIdx) , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(6));
+end
+xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+ylim([0 1]);
+legend
+
+linkaxes(bx,'x');
