@@ -32,7 +32,7 @@ sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
 
 % snr of -100db for an accumulated error of 1000 [m]:
 snrDb = 30; % [db]
-accumulatedErrorPower = 1000^2;
+accumulatedErrorPower = 200^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = accumulatedErrorPower/snrLin;
 noiseStd = sqrt(noisePowerLin);

@@ -2,7 +2,7 @@ clear; close all; clc;
 newRoad = false;
 newScenarios = false;
 
-vNominal_kph = 60; % [kph]
+vNominal_kph = 80;%60; % [kph]
 kph2m_s = 1000/60/60;
 vNominal = vNominal_kph*kph2m_s; % [m/s]
 
@@ -15,7 +15,7 @@ sSimParams.nScenarios = 1;
 sSimParams.enableGearChange = true;
 sSimParams.returnToInitValueInReset = false;
 sSimParams.desired_ySampleRate = 1; % [hz]
-sSimParams.doMyFiltering = false;
+sSimParams.doMyFiltering = true;
 
 gear = 1:5;
 ts = 1/sSimParams.fs;
@@ -172,7 +172,7 @@ for modelIdx = 1:nModels
     % for vRef = 80kph stable u (throttle level) was measured to be 0.5491 when
     % Ki was 0.0015; therefore stable z is 0.5491/0.0015 = 366.0718
     sInitValues{modelIdx}.xPlusMean_init      = [vNominal_kph * kph2m_s; 366.0781];
-    sInitValues{modelIdx}.xPlusCov_init       = [(5*kph2m_s)^2 , 0 ; 0 , 50^2];
+    sInitValues{modelIdx}.xPlusCov_init       = [(5*kph2m_s)^2 , 0 ; 0 , 500^2];
     sInitValues{modelIdx}.uInput_init         = uInput_init;
     sInitValues{modelIdx}.weight              = 1/nModels;
     sInitValues{modelIdx}.logWeight           = -log(nModels);
@@ -253,9 +253,9 @@ if sSimParams.doMyFiltering
     ax(3) = subplot(2,1,1); hold all;
     for gearIdx = 1:5
         if any(gearsIdx{gearIdx})
-            plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+            plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
         else
-            plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+            plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
         end
     end
     legend
@@ -265,7 +265,7 @@ if sSimParams.doMyFiltering
     for filteringIdx = 1:numel(csKalmanRes)
         assert(numel(unique(csKalmanRes{filteringIdx}.kalmanModelIdx))==1)
         log10Weight = (csKalmanRes{filteringIdx}.logWeight) ./ log(10);
-        plot(csKalmanRes{filteringIdx}.tVec , 20*log10Weight,'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))]);
+        plot(csKalmanRes{filteringIdx}.tVec , 20*log10Weight,'.-','DisplayName',['kModel: ',int2str(csKalmanRes{filteringIdx}.kalmanModelIdx(1))],'Parent',ax(4));
     end
     xlabel('sec'); ylabel('db'); title(['weights (logPropagation)']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
     ylim([-30 0]);
@@ -291,24 +291,59 @@ if sSimParams.doMyFiltering
     
     
     
-    % for filteringIdx = 1:numel(csKalmanRes)
-    %     scModelIdx      = csKalmanRes{filteringIdx}.scenarioModelIdx;
-    %     kalmanModelIdx  = csKalmanRes{filteringIdx}.kalmanModelIdx;
-    %     scIdx           = 1;%csKalmanRes{filteringIdx}.scenarioIdx;
+    %     for filteringIdx = 1:numel(csKalmanRes)
+    %         %scModelIdx      = csKalmanRes{filteringIdx}.scenarioModelIdx;
+    %         kalmanModelIdx  = csKalmanRes{filteringIdx}.kalmanModelIdx;
+    %         scIdx           = 1;%csKalmanRes{filteringIdx}.scenarioIdx;
     %
     %
-    %     figure;
-    %     subplot(2,1,1); hold all;
-    %     errorbar(csSim{scIdx}.y_tVec , csKalmanRes{filteringIdx}.xPlusMean(1,:)./kph2m_s , 3*sqrt(squeeze(csKalmanRes{filteringIdx}.xPlusCov(1,1,:)))./kph2m_s );
-    %     plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
-    %     title(['scModel: ',int2str(scModelIdx),'; kModel: ',int2str(kalmanModelIdx),'; filtered speed']); legend('filtered','true');
+    %         figure;
+    %         subplot(2,1,1); hold all;
+    %         errorbar(csSim{scIdx}.y_tVec , csKalmanRes{filteringIdx}.xPlusMean(1,:)./kph2m_s , 3*sqrt(squeeze(csKalmanRes{filteringIdx}.xPlusCov(1,1,:)))./kph2m_s );
+    %         plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
+    %         title(['scModel: ',int2str(filteringIdx),'; filtered speed']); legend('filtered','true');
     %
-    %     subplot(2,1,2); hold all;
-    %     errorbar(csSim{scIdx}.y_tVec , csKalmanRes{filteringIdx}.xPlusMean(2,:) , 3*sqrt(squeeze(csKalmanRes{filteringIdx}.xPlusCov(2,2,:))));
-    %     plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
-    %     title('filtered control-z'); legend('filtered','true');
+    %         subplot(2,1,2); hold all;
+    %         errorbar(csSim{scIdx}.y_tVec , csKalmanRes{filteringIdx}.xPlusMean(2,:) , 3*sqrt(squeeze(csKalmanRes{filteringIdx}.xPlusCov(2,2,:))));
+    %         plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
+    %         title('filtered control-z'); legend('filtered','true');
     %
-    % end
+    %     end
+    
+    for filteringIdx = 1:numel(csKalmanRes)
+        myAlpha(filteringIdx,:) = csKalmanRes{filteringIdx}.weight;
+    end
+    
+    for filteringIdx = 1:numel(csKalmanRes)
+        for i=1:numel(csSim{scIdx}.y_tVec)
+            myxPlusMean(:,filteringIdx,i) = csKalmanRes{filteringIdx}.xPlusMean(:,i);
+            myxPlusCov(:,:,filteringIdx,i) = csKalmanRes{filteringIdx}.xPlusCov(:,:,i);
+        end
+    end
+    
+    [~,sMax] = max(myAlpha);
+    figure;
+    for i=1:numel(csSim{scIdx}.y_tVec)
+        xPlusMeanSmax(i) = myxPlusMean(1,sMax(i),i);
+        xPlusCovSmax(i) = myxPlusCov(1,1,sMax(i),i);
+    end
+    
+   
+    subplot(2,1,1); hold all;
+    errorbar(csSim{scIdx}.y_tVec , xPlusMeanSmax./kph2m_s , 3*sqrt(xPlusCovSmax)./kph2m_s );
+    plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
+    title(['my filtered speed']); legend('filtered','true');
+    
+    for i=1:numel(csSim{scIdx}.y_tVec)
+        xPlusMeanSmax(i) = myxPlusMean(2,sMax(i),i);
+        xPlusCovSmax(i) = myxPlusCov(2,2,sMax(i),i);
+    end
+    
+    subplot(2,1,2); hold all;
+    errorbar(csSim{scIdx}.y_tVec , xPlusMeanSmax./kph2m_s , 3*sqrt(xPlusCovSmax)./kph2m_s );
+    plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
+    title('my filtered control-z'); legend('filtered','true');
+    
 end
 % barbel:
 figure;
@@ -368,6 +403,55 @@ ylim([0 1]);
 legend
 
 linkaxes(bx,'x');
+
+figure;
+[~,sMax] = max(alpha);
+
+for i=1:size(xEstMean,4)
+    xEstMeanSmax(i) =  xEstfMean(1,1,sMax(i),i);
+    xEstCovSmax(i) = xEstfCov(1,1,1,sMax(i),i);
+end
+
+subplot(2,1,1); hold all;
+errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
+plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
+title(['scModel: ',int2str(filteringIdx),'; filtered speed']); legend('filtered','true');
+
+for i=1:size(xEstMean,4)
+    xEstMeanSmax(i) =  xEstfMean(2,1,sMax(i),i);
+    xEstCovSmax(i) = xEstfCov(2,2,1,sMax(i),i);
+end
+
+subplot(2,1,2); hold all;
+errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
+plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
+title('filtered control-z'); legend('filtered','true');
+
+
+figure;
+[~,sMax] = max(gamma);
+
+for i=1:size(xEstMean,4)
+    xEstMeanSmax(i) =  xEstMean(1,1,sMax(i),i);
+    xEstCovSmax(i) = xEstCov(1,1,1,sMax(i),i);
+end
+
+subplot(2,1,1); hold all;
+errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
+plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
+title(['scModel: ',int2str(filteringIdx),'; smoothed speed']); legend('smoothed','true');
+
+for i=1:size(xEstMean,4)
+    xEstMeanSmax(i) =  xEstMean(2,1,sMax(i),i);
+    xEstCovSmax(i) = xEstCov(2,2,1,sMax(i),i);
+end
+
+subplot(2,1,2); hold all;
+errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
+plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
+title('smoothed control-z'); legend('smoothed','true');
+
+
 
 % debug:
 % smoothing:
