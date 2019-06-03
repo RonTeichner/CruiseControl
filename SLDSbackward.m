@@ -68,9 +68,9 @@ for t=T-1:-1:1
                 end
                 
                 pststpgV1t(it,st,stp) = switchProb * w(it,st,t) * alpha(st,t);
-                Stp = F(:,:,stp)*xEstfCov(:,:,it,st,t)*F(:,:,stp)'+Q(:,:,stp);
-                logdet2piStp = logdet(2*pi*Stp);
-                tmpvec=F(:,:,stp)*xEstfMean(:,it,st,t)+meanH(:,stp);
+                Pf_minus_at_t_plus1 = F(:,:,stp)*xEstfCov(:,:,it,st,t)*F(:,:,stp)' + Q(:,:,stp);    % xEstfCov @ t+1 givven dynamic stp applied at time t
+                logdet2piPf_minus_at_t_plus1 = logdet(2*pi*Pf_minus_at_t_plus1);                    % log(det(2*pi*Pf_minus_at_t_plus1))
+                x_f_minus_at_t_plus1 = F(:,:,stp)*xEstfMean(:,it,st,t) + meanH(:,stp);              % xEstfMean @ t+1 givven dynamic stp applied at time t
                 for jtp=1:Jtp
                     % LDSbackwardUpdate(xEstMean_at_k_plus1, xEstCov_at_k_plus1, xEstfMean_at_k, xEstfCov_at_k, XfMinus_at_k_plus1, PfMinus_at_k_plus1, F, Q)
                     [mu(:,it,st,jtp,stp),Sigma(:,:,it,st,jtp,stp)] = LDSbackwardUpdate(xEstMean(:,jtp,stp,t+1), xEstCov(:,:,jtp,stp,t+1),...
@@ -79,8 +79,8 @@ for t=T-1:-1:1
                     if doEC
                         % compute contribution to mixture weight:
                         % ztp= <htp|stp,jtp,v1:T>-<htp|st,stp,it,v_{1:t}>; Stp is the covariance
-                        ztp = xEstMean(:,jtp,stp,t+1) - tmpvec;
-                        tmp1=-0.5*ztp(:)'*(Stp\ztp(:))-0.5*logdet2piStp;
+                        ztp = xEstMean(:,jtp,stp,t+1) - x_f_minus_at_t_plus1;
+                        tmp1=-0.5*ztp(:)'*(Pf_minus_at_t_plus1\ztp(:))-0.5*logdet2piPf_minus_at_t_plus1;
                         logtmp2(it,st,jtp,stp)=log(pststpgV1t(it,st,stp)+eps) +tmp1; % Expectation Correction
                     else
                         logtmp2(it,st,jtp,stp)=log(pststpgV1t(it,st,stp)+eps); % Generalised Pseudo Bayes

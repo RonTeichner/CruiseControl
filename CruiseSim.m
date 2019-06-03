@@ -460,15 +460,15 @@ title('smoothed control-z'); legend('smoothed','true');
 
 
 %% debug:
-% % smoothing:
-% doEC = true; J = 1;
-% maxTime = 1680; % [sec];
-% maxTimeIdx = find(csSim{1}.y_tVec > maxTime,1,'first');
-% xEstfMean = xEstfMean(:,:,:,1:maxTimeIdx); xEstfCov = xEstfCov(:,:,:,:,1:maxTimeIdx);
-% xEstfMinus_mean = xEstfMinus_mean(:,:,:,:,1:maxTimeIdx); xEstfMinus_cov = xEstfMinus_cov(:,:,:,:,:,1:maxTimeIdx);
-% alpha = alpha(:,1:maxTimeIdx); w = w(:,:,1:maxTimeIdx);
-% [xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
-% 
+% smoothing:
+doEC = true; J = 1;
+maxTime = inf; % [sec];
+maxTimeIdx = find(csSim{1}.y_tVec < maxTime,1,'last');
+xEstfMean = xEstfMean(:,:,:,1:maxTimeIdx); xEstfCov = xEstfCov(:,:,:,:,1:maxTimeIdx);
+xEstfMinus_mean = xEstfMinus_mean(:,:,:,:,1:maxTimeIdx); xEstfMinus_cov = xEstfMinus_cov(:,:,:,:,:,1:maxTimeIdx);
+alpha = alpha(:,1:maxTimeIdx); w = w(:,:,1:maxTimeIdx);
+[xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
+
 % figure;
 % 
 % for gearIdx = 1:5
