@@ -19,11 +19,11 @@ sModelParams.std_e = 0;%2*1000/60/60; % [m/s]
 sModelParams.std_b = 1e-3*1000/60/60; % [m/s]
 
 % snr of 10db for a speed of 80kph:
-snrDb = 30; % [db]
-speedPower = (80*1000/60/60)^2;
+snrDb = 16; % [db]
+speedPower = (80*1000/60/60); % I get old and think it is not correct to square this value (80*1000/60/60)^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = speedPower/snrLin;
-noiseStd = sqrt(noisePowerLin);
+noiseStd = noisePowerLin; %sqrt(noisePowerLin);
 sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
 
 
@@ -31,11 +31,11 @@ sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
 %disp(['evaluated speed snr is: ',int2str(evaluatedSpeedSnr),' db']);
 
 % snr of -100db for an accumulated error of 1000 [m]:
-snrDb = 30; % [db]
-accumulatedErrorPower = 200^2;
+snrDb = 16; % [db]
+accumulatedErrorPower = 600; % I get old and think it is not correct to square this value 200^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = accumulatedErrorPower/snrLin;
-noiseStd = sqrt(noisePowerLin);
+noiseStd = noisePowerLin; %sqrt(noisePowerLin);
 sModelParams.controllerStateMeasure_std = noiseStd; %1e-3; % [m]
 
 %evaluatedaccumulatedErrorSnr = 10*log10(accumulatedErrorPower / mean((noiseStd * randn(1,1e4)).^2));

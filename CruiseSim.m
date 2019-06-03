@@ -1,6 +1,6 @@
 clear; close all; clc;
 newRoad = false;
-newScenarios = false;
+newScenarios = true;
 
 vNominal_kph = 80;%60; % [kph]
 kph2m_s = 1000/60/60;
@@ -15,7 +15,7 @@ sSimParams.nScenarios = 1;
 sSimParams.enableGearChange = true;
 sSimParams.returnToInitValueInReset = false;
 sSimParams.desired_ySampleRate = 1; % [hz]
-sSimParams.doMyFiltering = true;
+sSimParams.doMyFiltering = false;
 
 gear = 1:5;
 ts = 1/sSimParams.fs;
@@ -162,6 +162,12 @@ subplot(2,1,2);   hold all;
 plot(csSim{scIdx}.y_tVec , csSim{scIdx}.y(2,:),'DisplayName',['measure']); xlabel('sec'); ylabel('m'); title('cumulative error'); grid on;
 plot(csSim{scIdx}.sGroundTruth.tVec,csSim{scIdx}.sGroundTruth.stateVec(2,:),'LineWidth',2,'DisplayName',['groundTruth']); xlabel('sec'); ylabel('m'); grid on;
 legend
+
+% write process statistics to screen:
+speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2m_s); % [kph]
+uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
+display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
+display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
 nModels         = numel(csAllModels);
@@ -172,7 +178,7 @@ for modelIdx = 1:nModels
     % for vRef = 80kph stable u (throttle level) was measured to be 0.5491 when
     % Ki was 0.0015; therefore stable z is 0.5491/0.0015 = 366.0718
     sInitValues{modelIdx}.xPlusMean_init      = [vNominal_kph * kph2m_s; 366.0781];
-    sInitValues{modelIdx}.xPlusCov_init       = [(5*kph2m_s)^2 , 0 ; 0 , 500^2];
+    sInitValues{modelIdx}.xPlusCov_init       = [(40*kph2m_s)^2 , 0 ; 0 , 500^2];
     sInitValues{modelIdx}.uInput_init         = uInput_init;
     sInitValues{modelIdx}.weight              = 1/nModels;
     sInitValues{modelIdx}.logWeight           = -log(nModels);
@@ -423,7 +429,7 @@ for i=1:size(xEstMean,4)
 end
 
 subplot(2,1,2); hold all;
-errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
+errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax , 3*sqrt(xEstCovSmax) );
 plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
 title('filtered control-z'); legend('filtered','true');
 
@@ -447,47 +453,47 @@ for i=1:size(xEstMean,4)
 end
 
 subplot(2,1,2); hold all;
-errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
+errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax , 3*sqrt(xEstCovSmax) );
 plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
 title('smoothed control-z'); legend('smoothed','true');
 
 
 
-% debug:
-% smoothing:
-doEC = true; J = 1;
-maxTime = 1680; % [sec];
-maxTimeIdx = find(csSim{1}.y_tVec > maxTime,1,'first');
-xEstfMean = xEstfMean(:,:,:,1:maxTimeIdx); xEstfCov = xEstfCov(:,:,:,:,1:maxTimeIdx);
-xEstfMinus_mean = xEstfMinus_mean(:,:,:,:,1:maxTimeIdx); xEstfMinus_cov = xEstfMinus_cov(:,:,:,:,:,1:maxTimeIdx);
-alpha = alpha(:,1:maxTimeIdx); w = w(:,:,1:maxTimeIdx);
-[xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
-
-figure;
-
-for gearIdx = 1:5
-    gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
-end
-scIdx = 1;
-bx(5) = subplot(2,1,1); hold all;
-for gearIdx = 1:5
-    if any(gearsIdx{gearIdx})
-        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
-    else
-        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
-    end
-end
-legend
-
-bx(6) = subplot(2,1,2);
-hold all;
-
-for filteringIdx = 1:S
-    
-    plot(csSim{1}.y_tVec(1:maxTimeIdx) , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(6));
-end
-xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
-ylim([0 1]);
-legend
-
-linkaxes(bx,'x');
+%% debug:
+% % smoothing:
+% doEC = true; J = 1;
+% maxTime = 1680; % [sec];
+% maxTimeIdx = find(csSim{1}.y_tVec > maxTime,1,'first');
+% xEstfMean = xEstfMean(:,:,:,1:maxTimeIdx); xEstfCov = xEstfCov(:,:,:,:,1:maxTimeIdx);
+% xEstfMinus_mean = xEstfMinus_mean(:,:,:,:,1:maxTimeIdx); xEstfMinus_cov = xEstfMinus_cov(:,:,:,:,:,1:maxTimeIdx);
+% alpha = alpha(:,1:maxTimeIdx); w = w(:,:,1:maxTimeIdx);
+% [xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
+% 
+% figure;
+% 
+% for gearIdx = 1:5
+%     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
+% end
+% scIdx = 1;
+% bx(5) = subplot(2,1,1); hold all;
+% for gearIdx = 1:5
+%     if any(gearsIdx{gearIdx})
+%         plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+%     else
+%         plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+%     end
+% end
+% legend
+% 
+% bx(6) = subplot(2,1,2);
+% hold all;
+% 
+% for filteringIdx = 1:S
+%     
+%     plot(csSim{1}.y_tVec(1:maxTimeIdx) , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(6));
+% end
+% xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
+% ylim([0 1]);
+% legend
+% 
+% linkaxes(bx,'x');

@@ -99,6 +99,7 @@ sGroundTruth.tVec       = tVec;
 sGroundTruth.u          = u;
 sGroundTruth.gears      = gears;
 sGroundTruth.pos = pos;
+
 %% observer
 C = [1,0;0,1];
 
@@ -141,8 +142,9 @@ for i=2:numel(gearChangeD)
     end
 end
 
-
-
+sGroundTruth.yTvec = yD_tVec;
+sGroundTruth.stateVec_atMeasureTimes(1,:) = yNoNoise(1,1:yDownSampleRate:end);
+sGroundTruth.stateVec_atMeasureTimes(2,:) = yNoNoise(2,1:yDownSampleRate:end);
 
 end
 
