@@ -359,6 +359,7 @@ for gearIdx = 1:5
     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
 end
 scIdx = 1;
+
 bx(1) = subplot(3,1,1); hold all;
 for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
@@ -371,10 +372,20 @@ legend
 
 
 bx(2) = subplot(3,1,2); hold all;
-for filteringIdx = 1:S
-    
-    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(2));
+[~,sMax] = max(alpha);
+correctFilteredIndexes = (sMax' == csSim{scIdx}.sGroundTruth.gears_atMeasureTimes);
+for filteringIdx = 1:S    
+    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(2));    
 end
+j = 0;
+for i=1:numel(csSim{1}.y_tVec)
+    if not(correctFilteredIndexes(i))
+        %plot(csSim{1}.y_tVec(i) , alpha(sMax(i),i),'*k');
+        j = j + 1;
+        errorVec(:,j) = [csSim{1}.y_tVec(i) ; alpha(sMax(i),i)];
+    end
+end
+plot(errorVec(1,:) , errorVec(2,:),'.k','DisplayName',['errors'],'Parent',bx(2));
 xlabel('sec'); title(['filtered weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 ylim([0 1]);
 legend
@@ -400,10 +411,21 @@ scIdx = 1;
 
 
 bx(3) = subplot(3,1,3); hold all;
+[~,sMax] = max(gamma);
+correctFilteredIndexes = (sMax' == csSim{scIdx}.sGroundTruth.gears_atMeasureTimes);
 for filteringIdx = 1:S
     
     plot(csSim{1}.y_tVec , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(3));
 end
+j = 0; clear errorVec;
+for i=1:numel(csSim{1}.y_tVec)
+    if not(correctFilteredIndexes(i))
+        %plot(csSim{1}.y_tVec(i) , alpha(sMax(i),i),'*k');
+        j = j + 1;
+        errorVec(:,j) = [csSim{1}.y_tVec(i) ; gamma(sMax(i),i)];
+    end
+end
+plot(errorVec(1,:) , errorVec(2,:),'.k','DisplayName',['errors'],'Parent',bx(3));
 xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 ylim([0 1]);
 legend
@@ -456,44 +478,3 @@ subplot(2,1,2); hold all;
 errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax , 3*sqrt(xEstCovSmax) );
 plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(2,:)); xlabel('sec'); ylabel('m'); grid on;
 title('smoothed control-z'); legend('smoothed','true');
-
-
-
-%% debug:
-% smoothing:
-doEC = true; J = 1;
-maxTime = inf; % [sec];
-maxTimeIdx = find(csSim{1}.y_tVec < maxTime,1,'last');
-xEstfMean = xEstfMean(:,:,:,1:maxTimeIdx); xEstfCov = xEstfCov(:,:,:,:,1:maxTimeIdx);
-xEstfMinus_mean = xEstfMinus_mean(:,:,:,:,1:maxTimeIdx); xEstfMinus_cov = xEstfMinus_cov(:,:,:,:,:,1:maxTimeIdx);
-alpha = alpha(:,1:maxTimeIdx); w = w(:,:,1:maxTimeIdx);
-[xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimeIndexes, xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, F, Q, tranS, I, J, doEC);
-
-% figure;
-% 
-% for gearIdx = 1:5
-%     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
-% end
-% scIdx = 1;
-% bx(5) = subplot(2,1,1); hold all;
-% for gearIdx = 1:5
-%     if any(gearsIdx{gearIdx})
-%         plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
-%     else
-%         plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(5)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
-%     end
-% end
-% legend
-% 
-% bx(6) = subplot(2,1,2);
-% hold all;
-% 
-% for filteringIdx = 1:S
-%     
-%     plot(csSim{1}.y_tVec(1:maxTimeIdx) , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(6));
-% end
-% xlabel('sec'); title(['smoothed weights by barber']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
-% ylim([0 1]);
-% legend
-% 
-% linkaxes(bx,'x');

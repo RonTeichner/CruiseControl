@@ -145,6 +145,7 @@ end
 sGroundTruth.yTvec = yD_tVec;
 sGroundTruth.stateVec_atMeasureTimes(1,:) = yNoNoise(1,1:yDownSampleRate:end);
 sGroundTruth.stateVec_atMeasureTimes(2,:) = yNoNoise(2,1:yDownSampleRate:end);
+sGroundTruth.gears_atMeasureTimes = gears(1:yDownSampleRate:end);
 
 end
 
