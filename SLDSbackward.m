@@ -83,12 +83,12 @@ for t=T-1:-1:1
                         tmp1 = -0.5*ztp(:)'*(Pf_minus_at_t_plus1\ztp(:)) - 0.5*logdet2piPf_minus_at_t_plus1;
                         
                         % eps is bad because we have really law values at pststp_g_V1t
-                        logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)+eps) + tmp1; % Expectation Correction
-                        % logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)) + tmp1; % Expectation Correction
+                        % logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)+eps) + tmp1; % Expectation Correction
+                        logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)) + tmp1; % Expectation Correction
                     else
                         % eps is bad because we have really law values at pststp_g_V1t
-                        logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)+eps); % Generalised Pseudo Bayes
-                        %logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)); % Generalised Pseudo Bayes
+                        % logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)+eps); % Generalised Pseudo Bayes
+                        logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)); % Generalised Pseudo Bayes
                     end
                 end
             end
