@@ -421,7 +421,7 @@ end
 subplot(2,1,1); hold all;
 errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
 plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
-title(['scModel: ',int2str(filteringIdx),'; filtered speed']); legend('filtered','true');
+title(['filtered speed']); legend('filtered','true');
 
 for i=1:size(xEstMean,4)
     xEstMeanSmax(i) =  xEstfMean(2,1,sMax(i),i);
@@ -445,7 +445,7 @@ end
 subplot(2,1,1); hold all;
 errorbar(csSim{scIdx}.y_tVec , xEstMeanSmax./kph2m_s , 3*sqrt(xEstCovSmax)./kph2m_s );
 plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
-title(['scModel: ',int2str(filteringIdx),'; smoothed speed']); legend('smoothed','true');
+title(['smoothed speed']); legend('smoothed','true');
 
 for i=1:size(xEstMean,4)
     xEstMeanSmax(i) =  xEstMean(2,1,sMax(i),i);

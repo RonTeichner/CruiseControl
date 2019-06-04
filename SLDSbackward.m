@@ -56,7 +56,7 @@ end
 for t=T-1:-1:1
     if t==1;It=1; else It=I;end
     Jtp=J;
-    if any(t==switchTimes); switchFlag = true; else switchFlag = false; end
+    if any(t==(switchTimes-1)); switchFlag = true; else switchFlag = false; end
     clear logtmp2
     for st=1:S
         for it=1:It
@@ -67,7 +67,7 @@ for t=T-1:-1:1
                     switchProb = (stp == st);
                 end
                 
-                pststpgV1t(it,st,stp) = switchProb * w(it,st,t) * alpha(st,t);
+                pststp_g_V1t(it,st,stp) = switchProb * w(it,st,t) * alpha(st,t);
                 Pf_minus_at_t_plus1 = F(:,:,stp)*xEstfCov(:,:,it,st,t)*F(:,:,stp)' + Q(:,:,stp);    % xEstfCov @ t+1 givven dynamic stp applied at time t
                 logdet2piPf_minus_at_t_plus1 = logdet(2*pi*Pf_minus_at_t_plus1);                    % log(det(2*pi*Pf_minus_at_t_plus1))
                 x_f_minus_at_t_plus1 = F(:,:,stp)*xEstfMean(:,it,st,t) + meanH(:,stp);              % xEstfMean @ t+1 givven dynamic stp applied at time t
@@ -80,18 +80,28 @@ for t=T-1:-1:1
                         % compute contribution to mixture weight:
                         % ztp= <htp|stp,jtp,v1:T>-<htp|st,stp,it,v_{1:t}>; Stp is the covariance
                         ztp = xEstMean(:,jtp,stp,t+1) - x_f_minus_at_t_plus1;
-                        tmp1=-0.5*ztp(:)'*(Pf_minus_at_t_plus1\ztp(:))-0.5*logdet2piPf_minus_at_t_plus1;
-                        logtmp2(it,st,jtp,stp)=log(pststpgV1t(it,st,stp)+eps) +tmp1; % Expectation Correction
+                        tmp1 = -0.5*ztp(:)'*(Pf_minus_at_t_plus1\ztp(:)) - 0.5*logdet2piPf_minus_at_t_plus1;
+                        
+                        % eps is bad because we have really law values at pststp_g_V1t
+                        logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)+eps) + tmp1; % Expectation Correction
+                        % logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)) + tmp1; % Expectation Correction
                     else
-                        logtmp2(it,st,jtp,stp)=log(pststpgV1t(it,st,stp)+eps); % Generalised Pseudo Bayes
+                        % eps is bad because we have really law values at pststp_g_V1t
+                        logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)+eps); % Generalised Pseudo Bayes
+                        %logtmp2(it,st,jtp,stp)=log(pststp_g_V1t(it,st,stp)); % Generalised Pseudo Bayes
                     end
                 end
             end
         end
     end
     
-    pitstgjtpstpV1T=reshape(condexp(reshape(logtmp2,It*S,Jtp*S)),It,S,Jtp,S); % p(st,it|stp,jtp,v1:T)=p(st,it,stp,jtp|v1:T)/p(stp,jtp,v1:T)
-    
+    pitst_g_jtpstpV1T=reshape(condexp(reshape(logtmp2,It*S,Jtp*S)),It,S,Jtp,S); % p(st,it|stp,jtp,v1:T)=p(st,it,stp,jtp|v1:T)/p(stp,jtp,v1:T)
+    % pitstgjtpstpV1T: p(st | stp , V1:T)
+    % 1. reshape(logtmp2,It*S,Jtp*S): @(i,j) the transition from st=i to
+    % stp=j. so at column no. 1 all the values ending up at stp = 1.
+    % condexp(reshape(logtmp2,It*S,Jtp*S)) has all the transition
+    % probabilities normalized: so at column no. 1 all the values ending up
+    % at stp = 1 are together 1. 
     for st=1:S
         ind=0;
         gamma(st,t)=0;
@@ -99,7 +109,7 @@ for t=T-1:-1:1
             for stp=1:S
                 for jtp=1:Jtp
                     % p(st,stp,it,jtp|v1:T)=p(stp|V1:T)*p(jtp|stp,v1:T)p(st,it|stp,jtp,V1:T)
-                    pmixjoint(it,st,jtp,stp)=gamma(stp,t+1)*u(jtp,stp,t+1)*pitstgjtpstpV1T(it,st,jtp,stp);
+                    pmixjoint(it,st,jtp,stp)=gamma(stp,t+1)*u(jtp,stp,t+1)*pitst_g_jtpstpV1T(it,st,jtp,stp);
                     gamma(st,t)=gamma(st,t) + pmixjoint(it,st,jtp,stp);
                     ind=ind+1;
                     muComp(:,ind)=mu(:,it,st,jtp,stp);
