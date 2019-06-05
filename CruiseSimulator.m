@@ -27,7 +27,7 @@ stateVec(2,1) = initStateVec(2);
 
 % gear change logic:
 % min time between gear change is 4 seconds
-minTimeBetweenGearChanges = 15; % [sec]
+minTimeBetweenGearChanges = 4;%15; % [sec]
 minSpeedDiffBetweenGearChanges = 10*1000/60/60; % [m/s]
 % we change the gears at certain speed when the speed growth and in
 % certain speed when speeds lowers:
@@ -98,7 +98,9 @@ for i=2:nSamplesInSim
         figure;
     end
     if mod(i,1e3)==0
-        hold on; plot(tVec(1:i), stateVec(1,1:i)*60*60/1000); xlabel('sec'); ylabel('kph');
+        hold on; subplot(3,1,1);    plot(tVec(1:i), stateVec(1,1:i)*60*60/1000); xlabel('sec'); ylabel('kph');
+        subplot(3,1,2);             plot(tVec(1:i), u(1:i)); xlabel('sec'); ylabel('u');
+        subplot(3,1,3);             plot(tVec(1:i-1), asin(input_u(2,1:i-1))./pi*180); xlabel('sec'); ylabel('slope [deg]'); 
         pause(0.1);
         %display(['speed: ',num2str(nextStateVec(1)*60*60/1000),' kph; gear: ',int2str(gear)]);
     end
