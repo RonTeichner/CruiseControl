@@ -9,7 +9,7 @@ sModelParams.m = 1200; % [kg]
 sModelParams.Cr = 0.01; 
 sModelParams.Cd = 0.32;
 sModelParams.A = 2.4; % [m^2]
-sModelParams.Tm = 190; % [Nm]
+sModelParams.Tm = 35; % 190 [Nm] % in 190 at non-linear example with small slopes the car didn't change gears because of rather constant speed
 sModelParams.omega_m = 420; %[rad/sec]
 sModelParams.g = 9.8; % [m/sec^2]
 

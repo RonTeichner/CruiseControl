@@ -1,16 +1,17 @@
-clear; close all; clc;
-newRoad = false;
-newScenarios = false;
+clear;
+close all; clc;
+newRoad = true;
+newScenarios = true;
 
-vNominal_kph = 80;%60; % [kph]
+vNominal_kph = 80; % [kph]
 kph2m_s = 1000/60/60;
 vNominal = vNominal_kph*kph2m_s; % [m/s]
 
-sSimParams.nSeed = 7707660;%round(1e7*rand);
+sSimParams.nSeed = round(1e7*rand);
 sSimParams.fs = 100; % [hz]
 sSimParams.simDuration = 30*60; % [sec]
 sSimParams.simDistance = max(10e3, sSimParams.simDuration * (2*vNominal)); % [m]
-sSimParams.enableLinear = true;
+sSimParams.enableLinear = false;
 sSimParams.nScenarios = 1;
 sSimParams.enableGearChange = true;
 sSimParams.returnToInitValueInReset = false;
@@ -36,6 +37,10 @@ end
 
 sInputs.sRoad.roadX = roadX; sInputs.sRoad.roadZ = roadZ; sInputs.sRoad.sin_theta = sin_theta;
 sInputs.vRef = vNominal;
+
+figure; subplot(2,1,1); plot(roadX./1e3 , roadZ); xlabel('Km'); ylabel('m'); title('terrain');
+roadAngle = atan(diff(roadZ) ./ diff(transpose(roadX))); % [rad]
+subplot(2,1,2); plot(roadX(2:end)./1e3, roadAngle./pi*180); xlabel('km'); ylabel('deg'); title('slope');
 %% create models:
 csAllModels = CruiseParams(sSimParams.fs , gear, sSimParams.enableLinear);
 
@@ -67,36 +72,50 @@ for scIdx = 1:nScenarios
     v_kph{scIdx} = csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s;
 end
 
+
 figure;
 for gearIdx = 1:5
     gearsIdx{gearIdx} = csSim{scIdx}.sGroundTruth.gears == gearIdx;
-    if ~any(gearsIdx{1})
-        gearsIdx{gearIdx}(1) = 1;
-    end
 end
 scIdx = 1;
 ax(1) = subplot(4,1,1); hold all;
 for gearIdx = 1:5
-    plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),v_kph{scIdx}(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),v_kph{scIdx}(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
 end
 legend
 %subplot(4,1,2); plot(pos,theta/(2*pi)*360); xlabel('m'); ylabel('angle'); grid on;
 
 ax(2) = subplot(4,1,2); hold all;
 for gearIdx = 1:5
-    plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),roadZ_atPos{scIdx}(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(2)); xlabel('sec'); ylabel('m'); title('vertical position'); grid on;
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),roadZ_atPos{scIdx}(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(2)); xlabel('sec'); ylabel('m'); title('vertical position'); grid on;
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(2)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
 end
 legend
 
 ax(3) = subplot(4,1,3); hold all;
 for gearIdx = 1:5
-    plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.u(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); title('u'); grid on;
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.u(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); title('u'); grid on;
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
 end
 legend
 
 ax(4) = subplot(4,1,4); hold all;
 for gearIdx = 1:5
-    plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(2,gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(4)); xlabel('sec'); title('z'); ylabel('m'); grid on;
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(2,gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(4)); xlabel('sec'); title('z'); ylabel('m'); grid on;
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(4)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+    end
 end
 legend
 linkaxes(ax,'x');
@@ -114,14 +133,14 @@ figure;
 subplot(2,1,1); hold all;
 for scIdx = 1:nScenarios
     plot(csSim{scIdx}.sGroundTruth.pos,roadZ_atPos{scIdx});%,'DisplayName',['model: ',int2str(csSim{scIdx}.modelIdx)]);
-    xlabel('m'); ylabel('m'); title('road'); grid on;
+    xlabel('m'); ylabel('m'); title('road vs car position'); grid on;
 end
 %legend
 
 subplot(2,1,2);  hold all;
 for scIdx = 1:nScenarios
     plot(csSim{scIdx}.sGroundTruth.pos,thetaDeg_atPos{scIdx});%,'DisplayName',['model: ',int2str(csSim{scIdx}.modelIdx)]);
-    xlabel('m'); ylabel('deg'); title('road slope'); grid on;
+    xlabel('m'); ylabel('deg'); title('road slope vs car position'); grid on;
 end
 %legend
 
@@ -168,6 +187,7 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
+return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
 nModels         = numel(csAllModels);
@@ -334,7 +354,7 @@ if sSimParams.doMyFiltering
         xPlusCovSmax(i) = myxPlusCov(1,1,sMax(i),i);
     end
     
-   
+    
     subplot(2,1,1); hold all;
     errorbar(csSim{scIdx}.y_tVec , xPlusMeanSmax./kph2m_s , 3*sqrt(xPlusCovSmax)./kph2m_s );
     plot(csSim{scIdx}.sGroundTruth.tVec , csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s); xlabel('sec'); ylabel('kph'); grid on;
@@ -374,8 +394,8 @@ legend
 bx(2) = subplot(3,1,2); hold all;
 [~,sMax] = max(alpha);
 correctFilteredIndexes = (sMax' == csSim{scIdx}.sGroundTruth.gears_atMeasureTimes);
-for filteringIdx = 1:S    
-    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(2));    
+for filteringIdx = 1:S
+    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(2));
 end
 j = 0;
 for i=1:numel(csSim{1}.y_tVec)

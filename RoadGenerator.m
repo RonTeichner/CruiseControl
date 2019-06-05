@@ -1,6 +1,6 @@
 function [posVec,roadZAtPosVec,sin_theta_atPosVec] = RoadGenerator(simDistance)
 distance = 1000e3; % [m]
-peakHeight = 300; % [m]
+peakHeight = 40; % [m] 300 was good for linear examples, for non-linear trying something more realistic
 enableFig = true;
 [roadX,sin_theta,roadZ] = roadAngleGen(peakHeight,distance,enableFig);
 
@@ -20,8 +20,8 @@ sin_theta2 = reshape(sin_theta2,nSamplesIn10Km,[]);
 roadZ2 = reshape(roadZ2,nSamplesIn10Km,[]);
 
 %roadX = reshape([roadX ; roadX2],[],1);
-sin_theta = reshape([sin_theta ; sin_theta2],[],1);
-roadZ = reshape([roadZ ; roadZ2],[],1);
+sin_theta = reshape([sin_theta2 ; sin_theta],[],1);
+roadZ = reshape([roadZ2 ; roadZ],[],1);
 roadX = [0:(numel(roadZ)-1)]*roadX_ts;
 
 posVecFs = 0.5; % [m]
