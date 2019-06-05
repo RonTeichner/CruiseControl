@@ -9,7 +9,7 @@ sModelParams.m = 1200; % [kg]
 sModelParams.Cr = 0.01; 
 sModelParams.Cd = 0.32;
 sModelParams.A = 2.4; % [m^2]
-sModelParams.Tm = 35; % 190 [Nm] % in 190 at non-linear example with small slopes the car didn't change gears because of rather constant speed
+sModelParams.Tm = 80; % 190 [Nm] % in 190 at non-linear example with small slopes the car didn't change gears because of rather constant speed
 sModelParams.omega_m = 420; %[rad/sec]
 sModelParams.g = 9.8; % [m/sec^2]
 
@@ -46,9 +46,9 @@ sModelParams.controllerStateMeasure_std = noiseStd; %1e-3; % [m]
 e = 30*1000/60/60;  
 sModelParams.Kp = 0.9/e;
 
-% if I am 20 sec at 30kph less I'll add 25%
+% if I am 20 sec at 30kph less I'll add 35%
 e = 30*1000/60/60 * 20;
-sModelParams.Ki = 0.25/e;
+sModelParams.Ki = 0.35/e;
 
 if enableLinear
     sModelParams.beta = 0;

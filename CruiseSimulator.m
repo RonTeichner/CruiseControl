@@ -4,7 +4,7 @@ roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta;
 
 vRef = sInputs.vRef; % [m/s]
 ts = 1/sSimParams.fs;
-
+enableDebugFigure = false;
 % if sSimParams.enableGearChange
 %     initStateVec(1) = 0;
 %     gear = 1;
@@ -93,18 +93,18 @@ for i=2:nSamplesInSim
         previousGearChangeSpeed = currentStateVec(1);
     end
     pos(i) = pos(i-1) + nextStateVec(1)*ts;
-    
-    if i==2
-        figure;
+    if enableDebugFigure
+        if i==2
+            figure;
+        end
+        if mod(i,1e3)==0
+            hold on; subplot(3,1,1);    plot(tVec(1:i), stateVec(1,1:i)*60*60/1000); xlabel('sec'); ylabel('kph');
+            subplot(3,1,2);             plot(tVec(1:i), u(1:i)); xlabel('sec'); ylabel('u');
+            subplot(3,1,3);             plot(tVec(1:i-1), asin(input_u(2,1:i-1))./pi*180); xlabel('sec'); ylabel('slope [deg]');
+            pause(0.1);
+            %display(['speed: ',num2str(nextStateVec(1)*60*60/1000),' kph; gear: ',int2str(gear)]);
+        end
     end
-    if mod(i,1e3)==0
-        hold on; subplot(3,1,1);    plot(tVec(1:i), stateVec(1,1:i)*60*60/1000); xlabel('sec'); ylabel('kph');
-        subplot(3,1,2);             plot(tVec(1:i), u(1:i)); xlabel('sec'); ylabel('u');
-        subplot(3,1,3);             plot(tVec(1:i-1), asin(input_u(2,1:i-1))./pi*180); xlabel('sec'); ylabel('slope [deg]'); 
-        pause(0.1);
-        %display(['speed: ',num2str(nextStateVec(1)*60*60/1000),' kph; gear: ',int2str(gear)]);
-    end
-    
 end
 sGroundTruth.stateVec   = stateVec;
 sGroundTruth.tVec       = tVec;

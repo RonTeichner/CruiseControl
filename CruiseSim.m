@@ -1,6 +1,6 @@
 clear;
 close all; clc;
-newRoad = false;
+newRoad = true;
 newScenarios = true;
 
 vNominal_kph = 80; % [kph]
@@ -187,7 +187,7 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
-return
+%return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
 nModels         = numel(csAllModels);
