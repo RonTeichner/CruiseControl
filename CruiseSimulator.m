@@ -1,5 +1,7 @@
 function [ySampleRate,yD_tVec,yD,input_uD,gearChangeD,sGroundTruth] = CruiseSimulator(sSimParams,sModelParams,sInputs)
 
+
+enaleAdditionalGearChanges = true;
 roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta;
 
 vRef = sInputs.vRef; % [m/s]
@@ -25,10 +27,16 @@ input_u = zeros(2,nSamplesInSim);
 stateVec(1,1) = initStateVec(1);
 stateVec(2,1) = initStateVec(2);
 
+
+yDownSampleRate = round(sSimParams.fs/sSimParams.desired_ySampleRate);
+
+
 % gear change logic:
 % min time between gear change is 4 seconds
-minTimeBetweenGearChanges = 4;%15; % [sec]
+minTimeBetweenGearChanges = 8;%15; % [sec]
 minSpeedDiffBetweenGearChanges = 10*1000/60/60; % [m/s]
+maxTimeInSameGear = 20; % sec
+gearShifts = [1, -1];
 % we change the gears at certain speed when the speed growth and in
 % certain speed when speeds lowers:
 speedUpLimits   = [ 20 , 40 , 60 , 80 ]*1000./60./60; % at 20kph from 1 to 2, at 40 from 2 to 3...
@@ -53,34 +61,59 @@ for i=2:nSamplesInSim
     
     % gear change:
     if sSimParams.enableGearChange
-        
-        if currentStateVec(1) - previousGearChangeSpeed > minSpeedDiffBetweenGearChanges
-            speedDirection = 1;
-        elseif previousGearChangeSpeed - currentStateVec(1) > minSpeedDiffBetweenGearChanges
-            speedDirection = -1;
-        else
-            speedDirection = 0;
-        end
-        
-        if previousGearChangeTime + minTimeBetweenGearChanges < currentTime
-            if abs(currentStateVec(1) - previousGearChangeSpeed) > minSpeedDiffBetweenGearChanges
-                if speedDirection == 1 % speed up
-                    if currentStateVec(1,1) >= speedUpLimits(end)
-                        gear = 5;
-                    else
-                        gear = find(speedUpLimits > currentStateVec(1,1) , 1);
+        % change gear only in the observer time-scale for further simpler
+        % model:
+        if (round(currentTime*sSimParams.fs / yDownSampleRate) - currentTime*sSimParams.fs / yDownSampleRate) == 0
+            if currentStateVec(1) - previousGearChangeSpeed > minSpeedDiffBetweenGearChanges
+                speedDirection = 1;
+            elseif previousGearChangeSpeed - currentStateVec(1) > minSpeedDiffBetweenGearChanges
+                speedDirection = -1;
+            else
+                speedDirection = 0;
+            end
+            
+            if previousGearChangeTime + minTimeBetweenGearChanges < currentTime
+                if abs(currentStateVec(1) - previousGearChangeSpeed) > minSpeedDiffBetweenGearChanges
+                    if speedDirection == 1 % speed up
+                        if currentStateVec(1,1) >= speedUpLimits(end)
+                            gear = 5;
+                        else
+                            gear = find(speedUpLimits > currentStateVec(1,1) , 1);
+                        end
+                    elseif speedDirection == -1 % speed down
+                        if currentStateVec(1,1) <= speedDownLimits(1)
+                            gear = 1;
+                        else
+                            gear = 1 + find(speedDownLimits < currentStateVec(1,1) ,1,'last');
+                        end
                     end
-                elseif speedDirection == -1 % speed down
-                    if currentStateVec(1,1) <= speedDownLimits(1)
-                        gear = 1;
-                    else
-                        gear = 1 + find(speedDownLimits < currentStateVec(1,1) ,1,'last');
+                end
+            end
+            if enaleAdditionalGearChanges
+                if gear == gears(i-1) % gear was not changed
+                    if currentTime - previousGearChangeTime > maxTimeInSameGear  %shift gears to make it interesting
+                        if gear == 5
+                            gear = 4;
+                        elseif gear == 1
+                            gear = 2;
+                        else
+                            gear = gears(i-1) + gearShifts(round(rand+1));
+                            gear = min(max(1, gear),5);
+                        end
                     end
+                end
+            end
+            
+            % forcing +-1 gear changes:
+            if gear ~= gears(i-1) % gear was changed
+                if gear > gears(i-1)
+                    gear = gears(i-1) + 1;
+                elseif gear < gears(i-1)
+                    gear = gears(i-1) - 1;
                 end
             end
         end
     end
-    
     [nextStateVec,u_k] = CruiseTimeStep(currentStateVec, input_u(:,i-1), sModelParams, sSimParams, gear, b_k, sSimParams.enableLinear);
     previousStateVec = currentStateVec;
     
@@ -109,7 +142,7 @@ end
 sGroundTruth.stateVec   = stateVec;
 sGroundTruth.tVec       = tVec;
 sGroundTruth.u          = u;
-sGroundTruth.gears      = gears;
+sGroundTruth.gears      = gears; % @(i) is the gear that operated on state@(i-1)
 sGroundTruth.pos = pos;
 
 %% observer
@@ -139,20 +172,8 @@ yD_tVec = tVec(1) + [0:(size(yD,2)-1)]./ySampleRate;
 input_uD(1,:) = input_u(1,1:yDownSampleRate:end);
 input_uD(2,:) = input_u(2,1:yDownSampleRate:end);
 
-gearChangeD = zeros(size(yD_tVec));
-for i=2:numel(gearChangeD)
-    startPeriodTime = yD_tVec(i-1);
-    endPeriodTime = yD_tVec(i);
-    
-    firstIdxAt_tVec = find(tVec - startPeriodTime > 0 , 1 , 'first');
-    lastIdxAt_tVec  = find(endPeriodTime <= tVec , 1 , 'first');
-    
-    if gears(lastIdxAt_tVec) > gears(firstIdxAt_tVec)
-        gearChangeD(i) = 1;
-    elseif gears(lastIdxAt_tVec) < gears(firstIdxAt_tVec)
-        gearChangeD(i) = -1;
-    end
-end
+gearsD = gears(1:yDownSampleRate:end);      % @(i) is the gear that operated on state@(i-1)
+gearChangeD = [0 ; diff(gearsD)];           % '1' @(i) indicates that a new gear operated on state@(i-1)
 
 sGroundTruth.yTvec = yD_tVec;
 sGroundTruth.stateVec_atMeasureTimes(1,:) = yNoNoise(1,1:yDownSampleRate:end);

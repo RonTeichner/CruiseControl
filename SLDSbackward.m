@@ -56,7 +56,7 @@ end
 for t=T-1:-1:1
     if t==1;It=1; else It=I;end
     Jtp=J;
-    if any(t==(switchTimes-1)); switchFlag = true; else switchFlag = false; end
+    if any(t+1==switchTimes); switchFlag = true; else switchFlag = false; end
     clear logtmp2
     for st=1:S
         for it=1:It

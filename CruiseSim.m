@@ -1,7 +1,7 @@
 clear;
 close all; clc;
 newRoad = false;
-newScenarios = false;
+newScenarios = true;
 
 vNominal_kph = 80; % [kph]
 kph2m_s = 1000/60/60;
@@ -170,7 +170,7 @@ scIdx = 1;
 v_kph{scIdx} = csSim{scIdx}.sGroundTruth.stateVec(1,:)./kph2m_s;
 plot(csSim{scIdx}.y_tVec , csSim{scIdx}.y(1,:)./kph2m_s,'DisplayName',['measure']); xlabel('sec'); ylabel('kph'); title('speed'); grid on;
 
-gearShiftUpIdx = (csSim{scIdx}.gearChange == 1); gearShiftDownIdx = (csSim{scIdx}.gearChange == -1);
+gearShiftUpIdx = find(csSim{scIdx}.gearChange == 1) - 1; gearShiftDownIdx = find(csSim{scIdx}.gearChange == -1) - 1;
 stem(csSim{scIdx}.y_tVec(gearShiftUpIdx)    , 190*ones(size(csSim{scIdx}.y_tVec(gearShiftUpIdx))),'x','DisplayName',['gearShiftUp']);
 stem(csSim{scIdx}.y_tVec(gearShiftDownIdx)  , 150*ones(size(csSim{scIdx}.y_tVec(gearShiftDownIdx))),'DisplayName',['gearShiftDown']);
 
@@ -220,7 +220,10 @@ I = 1;
 y = csSim{1}.y; u = csSim{1}.input_u;
 xInitMean = sInitValues{3}.xPlusMean_init; xInitCov = sInitValues{3}.xPlusCov_init; uInit = sInitValues{3}.uInput_init;
 tranS = transpose(csAllModels{1}.transitionMat);
-switchTimeIndexes = find(csSim{1}.gearChange ~= 0);
+switchTimeIndexes = find(csSim{1}.gearChange ~= 0); % switchTimeIndexes ==1 @(i) indicates that a new gear operated at (i-1)
+
+% due to decimation:
+%switchTimeIndexes = sort([switchTimeIndexes ; switchTimeIndexes + 1]);
 
 S = numel(sKalmanMatrices);
 for s=1:S

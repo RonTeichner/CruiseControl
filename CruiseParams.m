@@ -75,8 +75,9 @@ transitionMat = [ ...
     [0.02 ; 0.08 ; 0.45 ; 0 ; 0.45],...
     [0.02 ; 0.08 ; 0.10 ; 0.8 ; 0]...
     ];
-
-
+% % because of decimation we add the chance of remaining at same gear:
+% transitionMat = transitionMat + diag(0.33*ones(1,5));
+% transitionMat = transitionMat./repmat(sum(transitionMat),5,1);
 
 sModelParams.transitionMat = transitionMat;
 
