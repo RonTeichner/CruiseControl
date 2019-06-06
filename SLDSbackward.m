@@ -62,15 +62,16 @@ for t=T-1:-1:1
         for it=1:It
             for stp=1:S
                 if switchFlag
-                    switchProb = tranS(stp,st);
+                    switchProb = tranS(st,stp);
                 else
                     switchProb = (stp == st);
                 end
                 
                 pststp_g_V1t(it,st,stp) = switchProb * w(it,st,t) * alpha(st,t);
-                Pf_minus_at_t_plus1 = F(:,:,stp)*xEstfCov(:,:,it,st,t)*F(:,:,stp)' + Q(:,:,stp);    % xEstfCov @ t+1 givven dynamic stp applied at time t
+                Pf_minus_at_t_plus1 = xEstfMinus_cov(:,:,it,st,stp,t+1);                            % xEstfCov @ t+1 givven dynamic stp applied at time t
                 logdet2piPf_minus_at_t_plus1 = logdet(2*pi*Pf_minus_at_t_plus1);                    % log(det(2*pi*Pf_minus_at_t_plus1))
-                x_f_minus_at_t_plus1 = F(:,:,stp)*xEstfMean(:,it,st,t) + meanH(:,stp);              % xEstfMean @ t+1 givven dynamic stp applied at time t
+                x_f_minus_at_t_plus1 = xEstfMinus_mean(:,it,st,stp,t+1);                            % xEstfMean @ t+1 givven dynamic stp applied at time t
+                
                 for jtp=1:Jtp
                     % LDSbackwardUpdate(xEstMean_at_k_plus1, xEstCov_at_k_plus1, xEstfMean_at_k, xEstfCov_at_k, XfMinus_at_k_plus1, PfMinus_at_k_plus1, F, Q)
                     [mu(:,it,st,jtp,stp),Sigma(:,:,it,st,jtp,stp)] = LDSbackwardUpdate(xEstMean(:,jtp,stp,t+1), xEstCov(:,:,jtp,stp,t+1),...

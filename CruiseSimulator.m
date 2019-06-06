@@ -63,7 +63,8 @@ for i=2:nSamplesInSim
     if sSimParams.enableGearChange
         % change gear only in the observer time-scale for further simpler
         % model:
-        if (round(currentTime*sSimParams.fs / yDownSampleRate) - currentTime*sSimParams.fs / yDownSampleRate) == 0
+        distFromInt = (currentTime*sSimParams.fs / yDownSampleRate) - round(currentTime*sSimParams.fs / yDownSampleRate); 
+        if  ( (distFromInt > 0.1) && (distFromInt < 0.2))
             if currentStateVec(1) - previousGearChangeSpeed > minSpeedDiffBetweenGearChanges
                 speedDirection = 1;
             elseif previousGearChangeSpeed - currentStateVec(1) > minSpeedDiffBetweenGearChanges
