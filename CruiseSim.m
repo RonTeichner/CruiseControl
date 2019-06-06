@@ -188,8 +188,8 @@ legend
 % write process statistics to screen:
 speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2m_s); % [kph]
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
-display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
-display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
+%display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
+%display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
 %return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
@@ -237,6 +237,21 @@ end
 
 display(['kalman input speed meas std: ', num2str(sqrt(R(1,1,1))),' m/s']);
 display(['kalman input controller meas std: ', num2str(sqrt(R(2,2,1))),' m']);
+
+for t = 1:(size(csSim{1}.sGroundTruth.stateVec_atMeasureTimes,2)-1)
+    currState = csSim{1}.sGroundTruth.stateVec_atMeasureTimes(:,t);
+    currGear = csSim{1}.sGroundTruth.gears_atMeasureTimes(t);
+    currF = F(:,:,currGear);
+    currG = G(:,:,currGear);
+    currU = u(:,t);
+    expectedState(:,t+1) = currF*currState + currG*currU;
+end
+
+processNoise = csSim{1}.sGroundTruth.stateVec_atMeasureTimes - expectedState;
+
+display(['groundTruth speed process std: ',num2str(std(processNoise(1,:))),' m/s']);
+display(['groundTruth controller process std: ',num2str(std(processNoise(2,:))),' m']);
+
 display(['kalman input speed process std: ', num2str(sqrt(Q(1,1,1))),' m/s']);
 display(['kalman input controller process std: ', num2str(sqrt(Q(2,2,1))),' m']);
 
