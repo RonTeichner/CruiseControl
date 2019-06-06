@@ -6,10 +6,10 @@ function csAllModels = CruiseParams(fs,gears,enableLinear)
 
 sModelParams.alpha_n = [40 25 16 12 10];
 sModelParams.m = 1200; % [kg]
-sModelParams.Cr = 0.01; 
+sModelParams.Cr = 0.01; % not in use
 sModelParams.Cd = 0.32;
 sModelParams.A = 2.4; % [m^2]
-sModelParams.Tm = 80; % 190 [Nm] % in 190 at non-linear example with small slopes the car didn't change gears because of rather constant speed
+sModelParams.Tm = 40; % 190 [Nm] % in 190 at non-linear example with small slopes the car didn't change gears because of rather constant speed
 sModelParams.omega_m = 420; %[rad/sec]
 sModelParams.g = 9.8; % [m/sec^2]
 
@@ -20,7 +20,7 @@ sModelParams.std_b = 1e-3*1000/60/60; % [m/s]
 
 % snr of 10db for a speed of 80kph:
 snrDb = 16; % [db]
-speedPower = (80*1000/60/60); % I get old and think it is not correct to square this value (80*1000/60/60)^2;
+speedPower = (60*1000/60/60); % I get old and think it is not correct to square this value (80*1000/60/60)^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = speedPower/snrLin;
 noiseStd = noisePowerLin; %sqrt(noisePowerLin);
@@ -32,7 +32,7 @@ sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
 
 % snr of -100db for an accumulated error of 1000 [m]:
 snrDb = 16; % [db]
-accumulatedErrorPower = 600; % I get old and think it is not correct to square this value 200^2;
+accumulatedErrorPower = 200; % I get old and think it is not correct to square this value 200^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = accumulatedErrorPower/snrLin;
 noiseStd = noisePowerLin; %sqrt(noisePowerLin);
@@ -60,12 +60,20 @@ end
 
 
 % transitionMat(r,c) is the chance of changing from gear r to gear c
+% transitionMat = [ ...
+%     [0 ; 0.5 ; 0.24 ; 0.20 ; 0.06] ,...
+%     [0.35 ; 0 ; 0.35 ; 0.20 ; 0.10],...
+%     [0.10 ; 0.35 ; 0 ; 0.35 ; 0.20],...
+%     [0.10 ; 0.20 ; 0.35 ; 0 ; 0.35],...
+%     [0.06 ; 0.20 ; 0.24 ; 0.5 ; 0]...
+%     ];
+
 transitionMat = [ ...
-    [0 ; 0.5 ; 0.24 ; 0.20 ; 0.06] ,...
-    [0.35 ; 0 ; 0.35 ; 0.20 ; 0.10],...
-    [0.10 ; 0.35 ; 0 ; 0.35 ; 0.20],...
-    [0.10 ; 0.20 ; 0.35 ; 0 ; 0.35],...
-    [0.06 ; 0.20 ; 0.24 ; 0.5 ; 0]...
+    [0 ; 0.8 ; 0.10 ; 0.08 ; 0.02] ,...
+    [0.45 ; 0 ; 0.45 ; 0.08 ; 0.02],...
+    [0.10 ; 0.45 ; 0 ; 0.45 ; 0.10],...
+    [0.02 ; 0.08 ; 0.45 ; 0 ; 0.45],...
+    [0.02 ; 0.08 ; 0.10 ; 0.8 ; 0]...
     ];
 
 

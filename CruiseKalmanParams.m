@@ -1,7 +1,7 @@
 function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     gear = sModelParams.gear;
     A = zeros(2,2);
-    A(1,1) = -sModelParams.g*sModelParams.Cr - sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
+    A(1,1) = -sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
     A(1,2) = sModelParams.alpha_n(gear)*sModelParams.Ki*sModelParams.Tm/sModelParams.m;
     A(2,1) = -1;
     A(2,2) = 0;
@@ -37,9 +37,10 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     % we switch gear long before the decimated measurement is received. 
     % It can be up to 5 m/s for v and 3 m for z
     %sKalmanMatrices.Q = [max(1e-6 , ((processNoiseStdFactor)*sModelParams.std_b)^2) , 0 ; 0 , max(1e-6 , ((processNoiseStdFactor)*sModelParams.std_e)^2)];
-    sKalmanMatrices.Q = [2^2 , 0 ; 0 , 6^2];
+    sKalmanMatrices.Q = [1.8^2 , 0 ; 0 , 9^2];
     
-    sKalmanMatrices.R = [max(1e-6 , ((kalmanFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((kalmanFactor)*sModelParams.controllerStateMeasure_std)^2)];
+    %sKalmanMatrices.R = [max(1e-6 , ((kalmanFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((kalmanFactor)*sModelParams.controllerStateMeasure_std)^2)];
+    sKalmanMatrices.R = [0.6^2 , 0 ; 0 , 15^2];
     
     %disp(['eigen-values of F are: ',mat2str(eig( sKalmanMatrices.F))]);
     if max(abs(eig( sKalmanMatrices.F))) < 1
