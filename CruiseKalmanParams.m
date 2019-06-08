@@ -45,7 +45,13 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     % we switch gear long before the decimated measurement is received. 
     % It can be up to 5 m/s for v and 3 m for z
     %sKalmanMatrices.Q = [max(1e-6 , ((processNoiseStdFactor)*sModelParams.std_b)^2) , 0 ; 0 , max(1e-6 , ((processNoiseStdFactor)*sModelParams.std_e)^2)];
-    sKalmanMatrices.Q = [0.05^2 , 0 ; 0 , 0.02^2];
+    
+%     % for the linear case I used:
+%     sKalmanMatrices.Q = [0.05^2 , 0 ; 0 , 0.02^2];
+%     
+    % for the non-linear case:
+    sKalmanMatrices.Q = [2.2^2 , 0 ; 0 , 2^2];
+    
     
     %sKalmanMatrices.R = [max(1e-6 , ((kalmanFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((kalmanFactor)*sModelParams.controllerStateMeasure_std)^2)];
     sKalmanMatrices.R = [0.6^2 , 0 ; 0 , 6^2];

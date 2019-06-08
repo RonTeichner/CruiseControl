@@ -6,7 +6,7 @@ enablePlane = false;
 mountainLenght = 10e3; % [m]
 planeLenght = 5e3; % [m]
 
-peakHeight = 70; % [m] 300 was good for linear examples, for non-linear trying something more realistic
+peakHeight = 70; % [m] 
 enableFig = false;
 [roadX,sin_theta,roadZ] = roadAngleGen(peakHeight,distance,enableFig);
 

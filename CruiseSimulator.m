@@ -1,12 +1,14 @@
 function [ySampleRate,yD_tVec,yD,input_uD,gearChangeD,sGroundTruth] = CruiseSimulator(sSimParams,sModelParams,sInputs)
 
 
-enaleAdditionalGearChanges = true;
+enaleAdditionalGearChanges = false;
+enableDynamicVref = false;
+constVrefDuration = 30; % [sec];
 roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta;
 
 vRef = sInputs.vRef; % [m/s]
 ts = 1/sSimParams.fs;
-enableDebugFigure = false;
+enableDebugFigure = true;
 % if sSimParams.enableGearChange
 %     initStateVec(1) = 0;
 %     gear = 1;
@@ -21,6 +23,7 @@ tVec = [0:(nSamplesInSim-1)]*ts;
 %aloc:
 stateVec = zeros(2,nSamplesInSim);
 u = zeros(nSamplesInSim,1);
+omega = zeros(nSamplesInSim,1);
 gears = zeros(nSamplesInSim,1);
 pos = zeros(nSamplesInSim,1);
 input_u = zeros(2,nSamplesInSim);
@@ -43,7 +46,7 @@ speedUpLimits   = [ 20 , 40 , 60 , 80 ]*1000./60./60; % at 20kph from 1 to 2, at
 speedDownLimits = [ 10 , 20 , 30 , 60 ]*1000./60./60; % at 60 from 5 to 4, at 30 from 4 to 3, at 20 from 3 to 2 at 10 from 2 to 1
 gears(1) = gear;
 previousStateVec = [0;0];
-previousGearChangeTime = -inf; previousGearChangeSpeed = 0;
+previousGearChangeTime = 0; previousGearChangeSpeed = 0; previousVrefUpdateTime = 0;
 for i=2:nSamplesInSim
     currentTime = tVec(i);
     currentStateVec(1,1) = stateVec(1,i-1);
@@ -55,7 +58,15 @@ for i=2:nSamplesInSim
     b_k = sModelParams.std_b * randn; % [m/s]
     
     sinTheta = interp1(roadX,sin_theta,pos(i-1));
-    
+    if enableDynamicVref
+        if currentTime - previousVrefUpdateTime > constVrefDuration
+            %vMax = 160; vMin = 40;
+            vMax = 120; vMin = 30;
+            vRef = (vMin + 10*round(rand*(((vMax - vMin)/10)-1)))*1000/60/60; % [m/s]
+            %display(['new vRef: ',num2str(vRef*60*60/1000),' kph'])
+            previousVrefUpdateTime = currentTime;
+        end
+    end
     
     input_u(:,i-1) = [vRef ; sinTheta];
     
@@ -121,6 +132,7 @@ for i=2:nSamplesInSim
     stateVec(1,i) = nextStateVec(1);
     stateVec(2,i) = nextStateVec(2);
     u(i) = u_k;
+    omega(i) = sModelParams.alpha_n(gear) * nextStateVec(1);
     gears(i) = gear;
     if gear ~= gears(i-1)
         previousGearChangeTime = currentTime;
@@ -143,6 +155,7 @@ end
 sGroundTruth.stateVec   = stateVec;
 sGroundTruth.tVec       = tVec;
 sGroundTruth.u          = u;
+sGroundTruth.omega      = omega;
 sGroundTruth.gears      = gears; % @(i) is the gear that operated on state@(i-1)
 sGroundTruth.pos = pos;
 

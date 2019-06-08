@@ -1,9 +1,9 @@
 clear;
 close all; clc;
 newRoad = false;
-newScenarios = true;
+newScenarios = false;
 
-vNominal_kph = 80; % [kph]
+vNominal_kph = 50; % [kph]
 kph2m_s = 1000/60/60;
 vNominal = vNominal_kph*kph2m_s; % [m/s]
 
@@ -190,7 +190,7 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 %display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 %display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
-return
+%return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
 nModels         = numel(csAllModels);
@@ -255,8 +255,17 @@ processNoise = csSim{1}.sGroundTruth.stateVec_atMeasureTimes - expectedState;
 display(['groundTruth speed process std: ',num2str(std(processNoise(1,:))),' m/s']);
 display(['groundTruth controller process std: ',num2str(std(processNoise(2,:))),' m']);
 
-display(['kalman input speed process std: ', num2str(sqrt(Q(1,1,1))),' m/s']);
-display(['kalman input controller process std: ', num2str(sqrt(Q(2,2,1))),' m']);
+if sqrt(Q(1,1,1)) > std(processNoise(1,:))
+    display(['kalman input speed process std: ', num2str(sqrt(Q(1,1,1))),' m/s']);
+else
+    display(['kalman input speed process std: ', num2str(sqrt(Q(1,1,1))),' m/s   !!!!!!!!!!!!!!!!!!!!!!!!!!']);
+end
+
+if sqrt(Q(2,2,1)) > std(processNoise(2,:))
+    display(['kalman input controller process std: ', num2str(sqrt(Q(2,2,1))),' m']);
+else
+    display(['kalman input controller process std: ', num2str(sqrt(Q(2,2,1))),' m   !!!!!!!!!!!!!!!!!!!!!!!!!!']);
+end
 
 enableCruiseCustom = true;
 [xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, loglik] = SLDSforward(y,u,switchTimeIndexes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I,enableCruiseCustom);
@@ -407,7 +416,7 @@ for gearIdx = 1:5
 end
 scIdx = 1;
 
-bx(1) = subplot(3,1,1); hold all;
+bx(1) = subplot(4,1,1); hold all;
 for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
         plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(1,gearsIdx{gearIdx})./kph2m_s,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(1)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
@@ -417,12 +426,20 @@ for gearIdx = 1:5
 end
 legend
 
+bx(2) = subplot(4,1,2); hold all;
+for gearIdx = 1:5
+    if any(gearsIdx{gearIdx})
+        plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.u(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(2)); xlabel('sec'); title('u'); grid on;
+    else
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',bx(2)); xlabel('sec'); grid on; ylabel('kph'); 
+    end
+end
 
-bx(2) = subplot(3,1,2); hold all;
+bx(3) = subplot(4,1,3); hold all;
 [~,sMax] = max(alpha);
 correctFilteredIndexes = (sMax' == csSim{scIdx}.sGroundTruth.gears_atMeasureTimes);
 for filteringIdx = 1:S
-    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(2));
+    plot(csSim{1}.y_tVec , alpha(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(3));
 end
 j = 0; clear errorVec;
 for i=1:numel(csSim{1}.y_tVec)
@@ -432,7 +449,7 @@ for i=1:numel(csSim{1}.y_tVec)
         errorVec(:,j) = [csSim{1}.y_tVec(i) ; alpha(sMax(i),i)];
     end
 end
-plot(errorVec(1,:) , errorVec(2,:),'.k','DisplayName',['errors'],'Parent',bx(2));
+plot(errorVec(1,:) , errorVec(2,:),'.k','DisplayName',['errors'],'Parent',bx(3));
 xlabel('sec'); title(['filtered weights by barber; ',int2str(length(errorVec)),' errors']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 ylim([0 1]);
 legend
@@ -457,12 +474,12 @@ scIdx = 1;
 % legend
 
 
-bx(3) = subplot(3,1,3); hold all;
+bx(4) = subplot(4,1,4); hold all;
 [~,sMax] = max(gamma);
 correctFilteredIndexes = (sMax' == csSim{scIdx}.sGroundTruth.gears_atMeasureTimes);
 for filteringIdx = 1:S
     
-    plot(csSim{1}.y_tVec , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(3));
+    plot(csSim{1}.y_tVec , gamma(filteringIdx,:),'.-','DisplayName',['kModel: ',int2str(filteringIdx)],'Parent',bx(4));
 end
 j = 0; clear errorVec;
 for i=1:numel(csSim{1}.y_tVec)
@@ -472,7 +489,7 @@ for i=1:numel(csSim{1}.y_tVec)
         errorVec(:,j) = [csSim{1}.y_tVec(i) ; gamma(sMax(i),i)];
     end
 end
-plot(errorVec(1,:) , errorVec(2,:),'.k','DisplayName',['errors'],'Parent',bx(3));
+plot(errorVec(1,:) , errorVec(2,:),'.k','DisplayName',['errors'],'Parent',bx(4));
 xlabel('sec'); title(['smoothed weights by barber; ',int2str(length(errorVec)),' errors']);% true sc model: ',int2str(csSim{1}.modelIdx)]);
 ylim([0 1]);
 legend
