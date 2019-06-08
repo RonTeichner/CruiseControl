@@ -1,6 +1,6 @@
 clear;
 close all; clc;
-newRoad = true;
+newRoad = false;
 newScenarios = true;
 
 vNominal_kph = 80; % [kph]
@@ -246,7 +246,7 @@ for t = 1:(size(csSim{1}.sGroundTruth.stateVec_atMeasureTimes,2)-1)
     currGear = csSim{1}.sGroundTruth.gears_atMeasureTimes(t);
     currF = F(:,:,currGear);
     currG = G(:,:,currGear);
-    currU = u(:,t);
+    currU = [u(:,t) ; sign(currState(1))];
     expectedState(:,t+1) = currF*currState + currG*currU;
 end
 
@@ -258,7 +258,8 @@ display(['groundTruth controller process std: ',num2str(std(processNoise(2,:))),
 display(['kalman input speed process std: ', num2str(sqrt(Q(1,1,1))),' m/s']);
 display(['kalman input controller process std: ', num2str(sqrt(Q(2,2,1))),' m']);
 
-[xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, loglik] = SLDSforward(y,u,switchTimeIndexes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I);
+enableCruiseCustom = true;
+[xEstfMean, xEstfCov, xEstfMinus_mean, xEstfMinus_cov, alpha, w, loglik] = SLDSforward(y,u,switchTimeIndexes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I,enableCruiseCustom);
 
 % smoothing:
 doEC = true; J = 1;

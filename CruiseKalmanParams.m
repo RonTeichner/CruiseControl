@@ -13,11 +13,19 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
         disp('therefore the contineous-time system is not stable !');
     end
     
-    B = zeros(2,2);
+%     B = zeros(2,2);
+%     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
+%     B(1,2) = -sModelParams.g;
+%     B(2,1) = 1;
+%     B(2,2) = 0;
+
+    B = zeros(2,3);
     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
     B(1,2) = -sModelParams.g;
+    B(1,3) = -sModelParams.g*sModelParams.Cr;
     B(2,1) = 1;
     B(2,2) = 0;
+    B(2,3) = 0;
     
     ts = 1/y_fs; % [sec]
     

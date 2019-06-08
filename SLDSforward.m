@@ -1,4 +1,4 @@
-function [xEstMean, xEstCov, xEstMinusMean, xEstMinusCov, alpha, w, loglik] = SLDSforward(y,u,switchTimes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I)
+function [xEstMean, xEstCov, xEstMinusMean, xEstMinusCov, alpha, w, loglik] = SLDSforward(y,u,switchTimes,F,G,H,Q,R,xInitCov,xInitMean,uInit,tranS,priorS,I,enableCruiseCustom)
 %SLDSFORWARD Switching Latent Linear Dynamical System Gaussian Sum forward pass
 %  [f F alpha w loglik]=SLDSforward(v,A,B,CovH,CovV,meanH,meanV,CovP,meanP,tranS,priorS,I)
 %
@@ -25,6 +25,7 @@ function [xEstMean, xEstCov, xEstMinusMean, xEstMinusCov, alpha, w, loglik] = SL
 %                 tranS(st,s) - probability of changing from s to st
 % prior         : switch initial distribution   - [S x 1]
 % I             : number of Gaussian components in the Gaussian Sum approximation
+% enableCruiseCustom : adding a third control input equal to sign of speed
 %
 % Outputs:
 % xEstMean      : filterered mean p(h(t|v(1:t))
@@ -48,9 +49,12 @@ xEstMean=zeros(N,I,S,T); xEstCov=zeros(N,N,I,S,T);
 
 % first time-step (t=1)
 for s=1:S
+    if enableCruiseCustom
+        uInput = [uInit ; sign(xInitMean(1))];
+    end
     [xEstMean(:,1,s,1), xEstCov(:,:,1,s,1), ~, ~, logphat] = LDSforwardUpdate(...
         xInitMean, xInitCov, ...
-        y(:,1), uInit, ...
+        y(:,1), uInput, ...
         F(:,:,s), G(:,:,s), H(:,:,s), Q(:,:,s), R(:,:,s));
     
     logalpha(s,1) = sumlog(priorS(s))+logphat;
@@ -67,9 +71,13 @@ for t=2:T
             for s=1:S
                 ind=ind+1; % ind represents a specific combination of state and gaussian component
                 % previous state was s and gaussian component was i, current state is st:
+                if enableCruiseCustom
+                    uInput = [u(:,t-1) ; sign(xEstMean(1,i,s,t-1))];
+                end
+                
                 [mu(:,ind), Sigma(:,:,ind), ~, ~, logphat] = LDSforwardUpdate(...
                     xEstMean(:,i,s,t-1), xEstCov(:,:,i,s,t-1),...
-                    y(:,t), u(:,t-1), ...
+                    y(:,t), uInput, ...
                     F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
                 if switchFlag
                     switchProb = tranS(st,s);
@@ -96,14 +104,22 @@ for t=1:T
         for i=1:I
             for s=1:S
                 if t > 1
+                    if enableCruiseCustom
+                        uInput = [u(:,t-1) ; sign(xEstMean(1,i,s,t-1))];
+                    end
+                    
                     [~, ~, xEstMinusMean(:,i,s,st,t), xEstMinusCov(:,:,i,s,st,t), ~] = LDSforwardUpdate(...
                         xEstMean(:,i,s,t-1), xEstCov(:,:,i,s,t-1),...
-                        zerosY, u(:,t-1), ...
+                        zerosY, uInput, ...
                         F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
                 else
+                    if enableCruiseCustom
+                        uInput = [uInit ; sign(xInitMean(1))];
+                    end
+                    
                     [~, ~, xEstMinusMean(:,i,s,st,t), xEstMinusCov(:,:,i,s,st,t), ~] = LDSforwardUpdate(...
                         xInitMean, xInitCov, ...
-                        zerosY, uInit, ...
+                        zerosY, uInput, ...
                         F(:,:,st), G(:,:,st), H(:,:,st), Q(:,:,st), R(:,:,st));
                 end
             end

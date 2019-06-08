@@ -18,11 +18,22 @@ if enableLinear
     A(2,1) = -1;
     A(2,2) = 0;
     
-    B = zeros(2,2);
+%     B = zeros(2,2);
+%     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
+%     B(1,2) = -sModelParams.g;
+%     B(2,1) = 1;
+%     B(2,2) = 0;
+
+    B = zeros(2,3);
     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
     B(1,2) = -sModelParams.g;
+    B(1,3) = -sModelParams.g*sModelParams.Cr;
     B(2,1) = 1;
     B(2,2) = 0;
+    B(2,3) = 0;
+
+    
+    input_u = [input_u ; sign(stateVec_x(1))];
     
     stateVec_x = stateVec_x + (A*stateVec_x + B*input_u)*ts + [b_k;0];
     

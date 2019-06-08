@@ -6,7 +6,7 @@ function csAllModels = CruiseParams(fs,gears,enableLinear)
 
 sModelParams.alpha_n = [40 25 16 12 10];
 sModelParams.m = 1200; % [kg]
-sModelParams.Cr = 0.01; % not in use
+sModelParams.Cr = 0.01; 
 sModelParams.Cd = 0.32;
 sModelParams.A = 2.4; % [m^2]
 sModelParams.Tm = 40; % 190 [Nm] % in 190 at non-linear example with small slopes the car didn't change gears because of rather constant speed
