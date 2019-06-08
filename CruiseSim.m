@@ -11,7 +11,7 @@ sSimParams.nSeed = round(1e7*rand);
 sSimParams.fs = 100; % [hz]
 sSimParams.simDuration = 30*60; % [sec]
 sSimParams.simDistance = max(10e3, sSimParams.simDuration * (2*vNominal)); % [m]
-sSimParams.enableLinear = true;
+sSimParams.enableLinear = false;
 sSimParams.nScenarios = 1;
 sSimParams.enableGearChange = true;
 sSimParams.returnToInitValueInReset = false;
@@ -190,7 +190,7 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 %display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 %display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
-%return
+return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
 nModels         = numel(csAllModels);

@@ -18,12 +18,12 @@ if enableLinear
     A(2,1) = -1;
     A(2,2) = 0;
     
-%     B = zeros(2,2);
-%     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
-%     B(1,2) = -sModelParams.g;
-%     B(2,1) = 1;
-%     B(2,2) = 0;
-
+    %     B = zeros(2,2);
+    %     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
+    %     B(1,2) = -sModelParams.g;
+    %     B(2,1) = 1;
+    %     B(2,2) = 0;
+    
     B = zeros(2,3);
     B(1,1) = sModelParams.alpha_n(gear)*sModelParams.Kp*sModelParams.Tm/sModelParams.m;
     B(1,2) = -sModelParams.g;
@@ -31,7 +31,7 @@ if enableLinear
     B(2,1) = 1;
     B(2,2) = 0;
     B(2,3) = 0;
-
+    
     
     input_u = [input_u ; sign(stateVec_x(1))];
     
@@ -49,14 +49,36 @@ else
     T = sModelParams.Tm * (1 - sModelParams.beta*(omega/sModelParams.omega_m - 1)^2);
     
     v_k1 =  stateVec_x(1) + ...
-        (sModelParams.alpha_n(gear) * u_k / sModelParams.m * T...        
+        (sModelParams.alpha_n(gear) * u_k / sModelParams.m * T...
+        - sModelParams.g * sModelParams.Cr * sign(stateVec_x(1))...
         - 0.5*sModelParams.rho * sModelParams.Cd * sModelParams.A/sModelParams.m * (stateVec_x(1))^2 ...
         - sModelParams.g*input_u(2))*ts...
         + b_k;
     
     z_k1 = stateVec_x(2) + (input_u(1) - stateVec_x(1))*ts;
     
+%     % check other derivation:
+%     an = sModelParams.alpha_n(gear); om = sModelParams.omega_m; beta = sModelParams.beta; Kp = sModelParams.Kp; Ki = sModelParams.Ki; rho = sModelParams.rho; Cd = sModelParams.Cd; Cr = sModelParams.Cr; A = sModelParams.A;
+%     l = sModelParams.Tm * an /sModelParams.m;
+%     
+%     v_k1_check = stateVec_x(1) + ...
+%         (stateVec_x(1)^3 * (an^2/om^2*l*Kp*beta)...
+%         -stateVec_x(1)^2 * (l*Kp*(an^2/om^2*input_u(1)*beta + 2*an/om*beta + 0.5*rho*Cd*A/Kp/(l*sModelParams.m)))...
+%         -stateVec_x(1)^2*stateVec_x(1) * (an^2/om^2*l*Ki*beta)...
+%         +stateVec_x(1) * (l*Kp*(2*an/om*input_u(1)*beta - 1 - beta))...
+%         +stateVec_x(1)*stateVec_x(2) * (2*an/om*l*Ki*beta)...
+%         +stateVec_x(2) * (l*Ki*(1+beta))...
+%         +(l*Kp*input_u(1)*(1-beta) - sModelParams.g * sModelParams.Cr * sign(stateVec_x(1)) - sModelParams.g*input_u(2))) *ts...
+%         + b_k;
+%     
+%     assert(abs(v_k1_check-v_k1) < 1e-6,' my derivation is bad');
+%     if abs(v_k1_check-v_k1) < 1e-6
+%         keyboard
+%     end
+%     
     stateVec_x = [v_k1 ; z_k1];
+    
+    
 end
 
 end
