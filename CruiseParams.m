@@ -46,9 +46,9 @@ sModelParams.controllerStateMeasure_std = noiseStd; %1e-3; % [m]
 e = 30*1000/60/60;  
 sModelParams.Kp = 0.9/e;
 
-% if I am 20 sec at 30kph less I'll add 35%
+% if I am 20 sec at 30kph less I'll add10%
 e = 30*1000/60/60 * 20;
-sModelParams.Ki = 0.35/e;
+sModelParams.Ki = 0.10/e;
 
 if enableLinear
     sModelParams.beta = 0;

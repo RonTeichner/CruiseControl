@@ -72,56 +72,61 @@ for i=2:nSamplesInSim
     
     % gear change:
     if sSimParams.enableGearChange
-        % change gear only in the observer time-scale for further simpler
-        % model:
-        distFromInt = (currentTime*sSimParams.fs / yDownSampleRate) - round(currentTime*sSimParams.fs / yDownSampleRate); 
-        if  ( (distFromInt > 0.1) && (distFromInt < 0.2))
-            if currentStateVec(1) - previousGearChangeSpeed > minSpeedDiffBetweenGearChanges
-                speedDirection = 1;
-            elseif previousGearChangeSpeed - currentStateVec(1) > minSpeedDiffBetweenGearChanges
-                speedDirection = -1;
-            else
-                speedDirection = 0;
-            end
+        if currentStateVec(1)*60*60/1000 < 10
+            gear = 1;
+        else
             
-            if previousGearChangeTime + minTimeBetweenGearChanges < currentTime
-                if abs(currentStateVec(1) - previousGearChangeSpeed) > minSpeedDiffBetweenGearChanges
-                    if speedDirection == 1 % speed up
-                        if currentStateVec(1,1) >= speedUpLimits(end)
-                            gear = 5;
-                        else
-                            gear = find(speedUpLimits > currentStateVec(1,1) , 1);
-                        end
-                    elseif speedDirection == -1 % speed down
-                        if currentStateVec(1,1) <= speedDownLimits(1)
-                            gear = 1;
-                        else
-                            gear = 1 + find(speedDownLimits < currentStateVec(1,1) ,1,'last');
+            % change gear only in the observer time-scale for further simpler
+            % model:
+            distFromInt = (currentTime*sSimParams.fs / yDownSampleRate) - round(currentTime*sSimParams.fs / yDownSampleRate);
+            if  ( (distFromInt > 0.1) && (distFromInt < 0.2))
+                if currentStateVec(1) - previousGearChangeSpeed > minSpeedDiffBetweenGearChanges
+                    speedDirection = 1;
+                elseif previousGearChangeSpeed - currentStateVec(1) > minSpeedDiffBetweenGearChanges
+                    speedDirection = -1;
+                else
+                    speedDirection = 0;
+                end
+                
+                if previousGearChangeTime + minTimeBetweenGearChanges < currentTime
+                    if abs(currentStateVec(1) - previousGearChangeSpeed) > minSpeedDiffBetweenGearChanges
+                        if speedDirection == 1 % speed up
+                            if currentStateVec(1,1) >= speedUpLimits(end)
+                                gear = 5;
+                            else
+                                gear = find(speedUpLimits > currentStateVec(1,1) , 1);
+                            end
+                        elseif speedDirection == -1 % speed down
+                            if currentStateVec(1,1) <= speedDownLimits(1)
+                                gear = 1;
+                            else
+                                gear = 1 + find(speedDownLimits < currentStateVec(1,1) ,1,'last');
+                            end
                         end
                     end
                 end
-            end
-            if enaleAdditionalGearChanges
-                if gear == gears(i-1) % gear was not changed
-                    if currentTime - previousGearChangeTime > maxTimeInSameGear  %shift gears to make it interesting
-                        if gear == 5
-                            gear = 4;
-                        elseif gear == 1
-                            gear = 2;
-                        else
-                            gear = gears(i-1) + gearShifts(round(rand+1));
-                            gear = min(max(1, gear),5);
+                if enaleAdditionalGearChanges
+                    if gear == gears(i-1) % gear was not changed
+                        if currentTime - previousGearChangeTime > maxTimeInSameGear  %shift gears to make it interesting
+                            if gear == 5
+                                gear = 4;
+                            elseif gear == 1
+                                gear = 2;
+                            else
+                                gear = gears(i-1) + gearShifts(round(rand+1));
+                                gear = min(max(1, gear),5);
+                            end
                         end
                     end
                 end
-            end
-            
-            % forcing +-1 gear changes:
-            if gear ~= gears(i-1) % gear was changed
-                if gear > gears(i-1)
-                    gear = gears(i-1) + 1;
-                elseif gear < gears(i-1)
-                    gear = gears(i-1) - 1;
+                
+                % forcing +-1 gear changes:
+                if gear ~= gears(i-1) % gear was changed
+                    if gear > gears(i-1)
+                        gear = gears(i-1) + 1;
+                    elseif gear < gears(i-1)
+                        gear = gears(i-1) - 1;
+                    end
                 end
             end
         end
@@ -144,9 +149,10 @@ for i=2:nSamplesInSim
             figure;
         end
         if mod(i,1e3)==0
-            hold on; subplot(3,1,1);    plot(tVec(1:i), stateVec(1,1:i)*60*60/1000); xlabel('sec'); ylabel('kph');
-            subplot(3,1,2);             plot(tVec(1:i), u(1:i)); xlabel('sec'); ylabel('u');
-            subplot(3,1,3);             plot(tVec(1:i-1), asin(input_u(2,1:i-1))./pi*180); xlabel('sec'); ylabel('slope [deg]');
+            hold on; subplot(4,1,1);    plot(tVec(1:i), stateVec(1,1:i)*60*60/1000); xlabel('sec'); ylabel('kph');
+            subplot(4,1,2);             plot(tVec(1:i), u(1:i)); xlabel('sec'); ylabel('u');
+            subplot(4,1,3);             plot(tVec(1:i), stateVec(2,1:i)); xlabel('sec'); ylabel('z');
+            subplot(4,1,4);             plot(tVec(1:i-1), asin(input_u(2,1:i-1))./pi*180); xlabel('sec'); ylabel('slope [deg]');
             pause(0.1);
             %display(['speed: ',num2str(nextStateVec(1)*60*60/1000),' kph; gear: ',int2str(gear)]);
         end
