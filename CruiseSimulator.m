@@ -8,7 +8,7 @@ roadX = sInputs.sRoad.roadX; sin_theta = sInputs.sRoad.sin_theta;
 
 vRef = sInputs.vRef; % [m/s]
 ts = 1/sSimParams.fs;
-enableDebugFigure = true;
+enableDebugFigure = false;
 % if sSimParams.enableGearChange
 %     initStateVec(1) = 0;
 %     gear = 1;
