@@ -261,7 +261,7 @@ legend
 dh(2) = subplot(4,1,2); hold all; xlabel('sec'); ylabel('kph'); title('speed diff between full and partial behaviour');
 dh(3) = subplot(4,1,3); hold all; xlabel('sec'); ylabel('m');   title('controll diff between full and partial behaviour');
 for t = 1:nTimesSteps
-    subplot(3,1,2); hold all;     
+    subplot(4,1,2); hold all;     
     plot(tVecMat(:,t) , partialSpeedBehaviourDiff(:,t,1)./kph2m_s,'b', 'Parent',dh(2),'DisplayName',['partial gear ',int2str(1)]);
     plot(tVecMat(:,t) , partialSpeedBehaviourDiff(:,t,2)./kph2m_s,'r', 'Parent',dh(2),'DisplayName',['partial gear ',int2str(2)]);
     plot(tVecMat(:,t) , partialSpeedBehaviourDiff(:,t,3)./kph2m_s,'y', 'Parent',dh(2),'DisplayName',['partial gear ',int2str(3)]);
@@ -270,7 +270,7 @@ for t = 1:nTimesSteps
 %     for gearIdx = 1:5
 %         plot(tVecMat(:,t) , partialSpeedBehaviourAtAllGears(:,t,gearIdx), 'DisplayName',['partial gear ',int2str(gearIdx)]);
 %     end
-    subplot(3,1,3); hold all;     
+    subplot(4,1,3); hold all;     
     plot(tVecMat(:,t) , partialControllBehaviourDiff(:,t,1),'b', 'Parent',dh(3),'DisplayName',['partial gear ',int2str(1)]);
     plot(tVecMat(:,t) , partialControllBehaviourDiff(:,t,2),'r', 'Parent',dh(3),'DisplayName',['partial gear ',int2str(2)]);
     plot(tVecMat(:,t) , partialControllBehaviourDiff(:,t,3),'y', 'Parent',dh(3),'DisplayName',['partial gear ',int2str(3)]);
@@ -281,8 +281,8 @@ for t = 1:nTimesSteps
 %         plot(tVecMat(:,t) , partialControllBehaviourAtAllGears(:,t,gearIdx), 'DisplayName',['partial gear ',int2str(gearIdx)]);
 %     end
 end
-subplot(3,1,2); legend({'partia gear 1','partia gear 2','partia gear 3','partia gear 4','partia gear 5'})
-subplot(3,1,3); legend({'partia gear 1','partia gear 2','partia gear 3','partia gear 4','partia gear 5'})
+subplot(4,1,2); legend({'partia gear 1','partia gear 2','partia gear 3','partia gear 4','partia gear 5'})
+subplot(4,1,3); legend({'partia gear 1','partia gear 2','partia gear 3','partia gear 4','partia gear 5'})
 dh(4) = subplot(4,1,4); hold all;
 for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
