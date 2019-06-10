@@ -1,7 +1,7 @@
 clear;
 close all; clc;
-newRoad = false;
-newScenarios = false;
+newRoad = true;
+newScenarios = true;
 
 vNominal_kph = 50; % [kph]
 kph2m_s = 1000/60/60;
@@ -190,7 +190,7 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 %display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 %display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
-
+return
 % look at the difference between the unmodeled behaviour of different
 % gears:
 nTimesSteps = size(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes,2);
