@@ -190,6 +190,57 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 %display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 %display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
+
+% look at the difference between the unmodeled behaviour of different
+% gears:
+nTimesSteps = size(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes,2);
+nSamplesToEvaluate = sSimParams.fs / sSimParams.desired_ySampleRate - 1;
+sModelParams = csSim{1}.sModelParams;
+for t = 1:nTimesSteps
+    currentTime     = csSim{scIdx}.y_tVec(t);
+    currentGear     = csSim{scIdx}.sGroundTruth.gears_atMeasureTimes(t);
+    currentStateVec = csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(:,t);
+    currentInput_u  = csSim{scIdx}.input_u(:,t);
+    
+    tVecMat(1:1+nSamplesToEvaluate,t) = currentTime + transpose([0:nSamplesToEvaluate]./sSimParams.fs);
+    
+    % full behaviour at correct gear:
+    fullSpeedBehaviourAtCorrectGear(1,t) = currentStateVec(1); fullControllBehaviourAtCorrectGear(1,t) = currentStateVec(2);
+    nextStateVec = currentStateVec;
+    for i = 1:nSamplesToEvaluate
+        [nextStateVec,~] = CruiseTimeStep(nextStateVec, currentInput_u, sModelParams, sSimParams, currentGear, 0, false);
+        fullSpeedBehaviourAtCorrectGear(i+1,t) = nextStateVec(1); fullControllBehaviourAtCorrectGear(i+1,t) = nextStateVec(2);
+    end
+    
+    % partial behaviour at all gears:
+    sModelParamsPartialBehaviour = sModelParams; sModelParamsPartialBehaviour.beta = 0;
+    for gearIdx = 1:5
+        partialSpeedBehaviourAtAllGears(1,t,gearIdx) = currentStateVec(1); partialControllBehaviourAtAllGears(1,t,gearIdx) = currentStateVec(2);
+        nextStateVec = currentStateVec;
+        for i = 1:nSamplesToEvaluate
+            [nextStateVec,~] = CruiseTimeStep(nextStateVec, currentInput_u, sModelParams, sSimParams, gearIdx, 0, false);
+            partialSpeedBehaviourAtAllGears(i+1,t,gearIdx) = nextStateVec(1); partialControllBehaviourAtAllGears(i+1,t,gearIdx) = nextStateVec(2);
+        end
+    end
+    
+end
+
+figure; 
+subplot(2,1,1); hold all; xlaebl('sec'); ylabel('m/s'); title('speed partial behaviour vs full');
+subplot(2,1,2); hold all; xlaebl('sec'); ylabel('m');   title('controlle partial behaviour vs full');
+for t = 1:nTimesSteps
+    subplot(2,1,1); hold all; 
+    plot(tVecMat(:,t) , fullSpeedBehaviourAtCorrectGear(:,t), 'DisplayName',['fullCorrect']);
+    for gearIdx = 1:5
+        plot(tVecMat(:,t) , partialSpeedBehaviourAtAllGears(:,t,gearIdx), 'DisplayName',['partial gear ',int2str(gearIdx)]);
+    end
+    subplot(2,1,2); hold all; 
+    plot(tVecMat(:,t) , fullControllBehaviourAtCorrectGear(:,t), 'DisplayName',['fullCorrect']);
+    for gearIdx = 1:5
+        plot(tVecMat(:,t) , partialControllBehaviourAtAllGears(:,t,gearIdx), 'DisplayName',['partial gear ',int2str(gearIdx)]);
+    end
+end
+legend;
 return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
