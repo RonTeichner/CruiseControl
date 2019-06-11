@@ -24,14 +24,14 @@ speedPower = (60*1000/60/60); % I get old and think it is not correct to square 
 snrLin = 10^(snrDb / 10);
 noisePowerLin = speedPower/snrLin;
 noiseStd = noisePowerLin; %sqrt(noisePowerLin);
-sModelParams.speedMeasure_std = noiseStd; %0.25*1000/60/60; % [m/s]
+sModelParams.speedMeasure_std = 0.03; % [m/s] from Novatel. noiseStd; %0.25*1000/60/60; % [m/s]
 
 
 %evaluatedSpeedSnr = 10*log10(speedPower / mean((noiseStd * randn(1,1e4)).^2));
 %disp(['evaluated speed snr is: ',int2str(evaluatedSpeedSnr),' db']);
 
 % snr of -100db for an accumulated error of 1000 [m]:
-snrDb = 16; % [db]
+snrDb = 160; % [db]
 accumulatedErrorPower = 200; % I get old and think it is not correct to square this value 200^2;
 snrLin = 10^(snrDb / 10);
 noisePowerLin = accumulatedErrorPower/snrLin;
@@ -54,7 +54,7 @@ if enableLinear
     sModelParams.beta = 0;
     sModelParams.rho = 0;
 else
-    sModelParams.beta = 0.4;
+    sModelParams.beta = 0.6;%0.4;
     sModelParams.rho = 1.3; %[kg/m^3]
 end
 

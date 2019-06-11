@@ -3,7 +3,7 @@ close all; clc;
 newRoad = true;
 newScenarios = true;
 
-vNominal_kph = 50; % [kph]
+vNominal_kph = 80; % [kph]
 kph2m_s = 1000/60/60;
 vNominal = vNominal_kph*kph2m_s; % [m/s]
 
@@ -37,6 +37,8 @@ end
 
 sInputs.sRoad.roadX = roadX; sInputs.sRoad.roadZ = roadZ; sInputs.sRoad.sin_theta = sin_theta;
 sInputs.vRef = vNominal;
+
+%sInputs.sRoad.roadZ = zeros(size(sInputs.sRoad.roadZ)); sInputs.sRoad.sin_theta = zeros(size(sInputs.sRoad.roadZ)); 
 
 figure; subplot(2,1,1); plot(roadX./1e3 , roadZ); xlabel('Km'); ylabel('m'); title('terrain');
 roadAngle = atan(diff(roadZ) ./ diff(transpose(roadX))); % [rad]
@@ -94,7 +96,7 @@ for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
         plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),roadZ_atPos{scIdx}(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(2)); xlabel('sec'); ylabel('m'); title('vertical position'); grid on;
     else
-        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(2)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(2)); xlabel('sec'); grid on; ylabel('m'); title('vertical position');
     end
 end
 legend
@@ -104,7 +106,7 @@ for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
         plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.u(gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); title('u'); grid on;
     else
-        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(3)); xlabel('sec'); grid on; title('u');
     end
 end
 legend
@@ -114,7 +116,7 @@ for gearIdx = 1:5
     if any(gearsIdx{gearIdx})
         plot(csSim{scIdx}.sGroundTruth.tVec(gearsIdx{gearIdx}),csSim{scIdx}.sGroundTruth.stateVec(2,gearsIdx{gearIdx}),'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(4)); xlabel('sec'); title('z'); ylabel('m'); grid on;
     else
-        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(4)); xlabel('sec'); grid on; ylabel('kph'); title('GroundTruth - speed');
+        plot(0,0,'.','DisplayName',['gear: ',int2str(gearIdx)],'Parent',ax(4)); xlabel('sec'); grid on; ylabel('m'); title('z');
     end
 end
 legend
@@ -190,7 +192,7 @@ speedDiffKph = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(1,:)./kph2
 uDiff = diff(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes(2,:)); % [m]
 %display(['speed statistics: meanDiff: ',num2str(mean(speedDiffKph)),'; std: ',num2str(std(speedDiffKph)),' [kph]']);
 %display(['controller statistics: meanDiff: ',num2str(mean(uDiff)),'; std: ',num2str(std(uDiff)),' [m]']);
-return
+%return
 % look at the difference between the unmodeled behaviour of different
 % gears:
 nTimesSteps = size(csSim{scIdx}.sGroundTruth.stateVec_atMeasureTimes,2);
@@ -294,7 +296,7 @@ end
 legend
 
 linkaxes(dh,'x');
-return
+%return
 %% create kalman matrices for every model:
 y_fs            = csSim{1}.y_fs;
 nModels         = numel(csAllModels);

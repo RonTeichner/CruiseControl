@@ -54,7 +54,7 @@ function sKalmanMatrices = CruiseKalmanParams(sModelParams,y_fs,x_fs)
     
     
     %sKalmanMatrices.R = [max(1e-6 , ((kalmanFactor)*sModelParams.speedMeasure_std)^2) , 0 ; 0 , max(1e-6 , ((kalmanFactor)*sModelParams.controllerStateMeasure_std)^2)];
-    sKalmanMatrices.R = [0.6^2 , 0 ; 0 , 6^2];
+    sKalmanMatrices.R = [0.03^2 , 0 ; 0 , (2e-14)^2];
     
     %disp(['eigen-values of F are: ',mat2str(eig( sKalmanMatrices.F))]);
     if max(abs(eig( sKalmanMatrices.F))) < 1
