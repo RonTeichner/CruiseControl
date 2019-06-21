@@ -30,12 +30,12 @@ function [xEstMean, xEstCov, gamma, u] = SLDSbackward(switchTimes, xEstfMean, xE
 % u             : mixture weights
 % See also SLDSforward.m, demoSLDStraffic.m
 %import brml.*
+
 if isempty(varargin)
     doEC=1;
 else
     doEC=varargin{1};
 end
-
 
 S = size(F,3); T = size(xEstfMean,4); N = size(F,1);
 u = zeros(J,S,T);
@@ -43,6 +43,16 @@ xEstMean = zeros(N,J,S,T); xEstCov = zeros(N,N,J,S,T);
 
 % meanH : transition mean
 meanH = zeros(N , S);
+
+enableDebugFigure = false;
+if enableDebugFigure 
+    figure; hold all; xlabel('timeIdx'); title('smoothed probabilities'); grid on;
+    cMat = [0.00 , 0.45 , 0.74 ; 0.85, 0.33, 0.10 ; 0.93 , 0.69 , 0.13];  
+    for filteringIdx=1:S
+        plot(T , 0,'.-','Color',cMat(filteringIdx,:),'DisplayName',['kModel: ',int2str(filteringIdx)]);%,'Parent',bx(3));
+    end
+    legend;
+end
 
 gamma(:,T)=alpha(:,T);
 if J<I
@@ -62,7 +72,7 @@ for t=T-1:-1:1
         for it=1:It
             for stp=1:S
                 if switchFlag
-                    switchProb = tranS(st,stp);
+                    switchProb = tranS(stp,st); % switchProb from st to stp 
                 else
                     switchProb = (stp == st);
                 end
@@ -70,7 +80,7 @@ for t=T-1:-1:1
                 pststp_g_V1t(it,st,stp) = switchProb * w(it,st,t) * alpha(st,t);
                 Pf_minus_at_t_plus1 = xEstfMinus_cov(:,:,it,st,stp,t+1);                            % xEstfCov @ t+1 givven dynamic stp applied at time t
                 logdet2piPf_minus_at_t_plus1 = logdet(2*pi*Pf_minus_at_t_plus1);                    % log(det(2*pi*Pf_minus_at_t_plus1))
-                x_f_minus_at_t_plus1 = xEstfMinus_mean(:,it,st,stp,t+1);                            % xEstfMean @ t+1 givven dynamic stp applied at time t
+                
                 
                 for jtp=1:Jtp
                     % LDSbackwardUpdate(xEstMean_at_k_plus1, xEstCov_at_k_plus1, xEstfMean_at_k, xEstfCov_at_k, XfMinus_at_k_plus1, PfMinus_at_k_plus1, F, Q)
@@ -80,7 +90,7 @@ for t=T-1:-1:1
                     if doEC
                         % compute contribution to mixture weight:
                         % ztp= <htp|stp,jtp,v1:T>-<htp|st,stp,it,v_{1:t}>; Stp is the covariance
-                        ztp = xEstMean(:,jtp,stp,t+1) - x_f_minus_at_t_plus1;
+                        ztp = xEstMean(:,jtp,stp,t+1) - xEstfMinus_mean(:,it,st,stp,t+1); % xEstfMinus_mean @ t+1 givven dynamic stp applied at time t on the gaussian for switch state st
                         tmp1 = -0.5*ztp(:)'*(Pf_minus_at_t_plus1\ztp(:)) - 0.5*logdet2piPf_minus_at_t_plus1;
                         
                         % eps is bad because we have really law values at pststp_g_V1t
@@ -122,5 +132,11 @@ for t=T-1:-1:1
         pComp=condp(pComp);
         [u(:,st,t),xEstMean(:,:,st,t),xEstCov(:,:,:,st,t)]=mix2mix(pComp,muComp,SigmaComp,J);  % Project to a mixture
     end
-    
+    if enableDebugFigure
+        % debug figure:        
+        for filteringIdx = 1:S
+            plot(t:T , gamma(filteringIdx,t:T),'.-','Color',cMat(filteringIdx,:),'HandleVisibility','off')%,'DisplayName',['kModel: ',int2str(filteringIdx)])%,'Parent',bx(3));
+        end
+        %%%%%%%%%%%%%%%
+    end
 end
